@@ -1,0 +1,6 @@
+{
+  "name": "integrated-dev",
+  "type": "dokku",
+  "host": "integrated-dev.nexxera.com",
+  "conf_app_file": "git@gitlab.nexxera.com:group/my-app.git"
+}

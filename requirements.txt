@@ -1,0 +1,4 @@
+click
+gitpython
+Jinja2
+timeout-decorator
