@@ -38,7 +38,7 @@ class AssembleModelTest(unittest.TestCase):
         environment_expected = Environment(
             type="dokku",
             name="integrated-dev",
-            host="integrated-dev.nexxera.com",
-            conf_app_file="git@gitlab.nexxera.com:group/my-app.git")
+            deploy_host="integrated-dev.nexxera.com",
+            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
 
         self.assertEqual(environment.__dict__, environment_expected.__dict__)

@@ -18,9 +18,9 @@ class DokkuPaas(AbstractPaas):
         print("Deploying app: %s, repository: %s" % (app.name, app.repository))
         pprint.pprint(app.env_vars)
 
-    def load_app(self, name):
+    def app_url(self, name):
         return "http://%s.com" % (name)
 
     @service("postgres")
-    def load_postgres(self, resource):
+    def postgres(self, resource):
         return "postgres://user:senha@localhost:5432/%s" % (resource)

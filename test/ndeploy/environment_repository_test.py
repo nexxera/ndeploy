@@ -23,8 +23,8 @@ class EnvironmentTest(unittest.TestCase):
         environment = Environment(
             type="dokku",
             name="integrated-dev",
-            host="integrated-dev.nexxera.com",
-            conf_app_file="git@gitlab.nexxera.com:group/my-app.git")
+            deploy_host="integrated-dev.nexxera.com",
+            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
 
         environment_repository.add_environment(environment)
 
@@ -60,15 +60,15 @@ class EnvironmentTest(unittest.TestCase):
         environment_dev = Environment(
             type="dokku",
             name="integrated-dev",
-            host="integrated-dev.nexxera.com",
-            conf_app_file="git@gitlab.nexxera.com:group/my-app.git")
+            deploy_host="integrated-dev.nexxera.com",
+            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
         environment_repository.add_environment(environment_dev)
 
         environment_qa = Environment(
             type="openshift",
             name="qa",
-            host="qa.nexxera.com",
-            conf_app_file="git@gitlab.nexxera.com:group/my-app.git")
+            deploy_host="qa.nexxera.com",
+            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
         environment_repository.add_environment(environment_qa)
 
         environment_repository.remove_environment("qa")
@@ -85,4 +85,4 @@ class EnvironmentTest(unittest.TestCase):
         environment = environment_repository.load_environment("dev")
 
         self.assertEqual(environment.type, "dokku")
-        self.assertEqual(environment.host, "integrated-dev.nexxera.com")
+        self.assertEqual(environment.deploy_host, "integrated-dev.nexxera.com")

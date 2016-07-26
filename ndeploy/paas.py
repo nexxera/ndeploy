@@ -5,6 +5,8 @@ import importlib
 import inspect
 import os
 import pkgutil
+from abc import abstractclassmethod, abstractmethod
+from importlib import abc
 
 """
 Services que são carregados para que possam ser invocado no processo de deploy.
@@ -50,14 +52,44 @@ class AbstractPaas:
 
     __type__ = None
 
-    """Método usado para realização de deploy através de git push no diretório informado em app.repository ou do diretório corrente."""
-    def deploy_by_git_push(self, app): pass
+    @abstractmethod
+    def deploy_by_git_push(self, app):
+        """
+        Método usado para realização de deploy através de git push no diretório informado em app.repository ou do diretório corrente.
 
-    """Método usado para realização de deploy através de imagem docker conforme url informada em app.image."""
-    def deploy_by_image(self, app): pass
+        Args:
+            app: Objeto App com os dados que serão usados para o deploy.
 
-    """Método usado para capturar a url de acesso a aplicação em execução no mesmo PaaS."""
-    def load_app(self, resource): pass
+        Returns:
+
+        """
+        pass
+
+
+    @abstractmethod
+    def deploy_by_image(self, app):
+        """
+        Método usado para realização de deploy através de imagem docker conforme url informada em app.image.
+        Args:
+            app:
+
+        Returns:
+
+        """
+        pass
+
+
+    @abstractmethod
+    def app_url(self, resource):
+        """
+        Método usado para capturar a url de acesso a aplicação em execução no mesmo PaaS.
+        Args:
+            resource:
+
+        Returns:
+
+        """
+        pass
 
     def deploy(self, app, environment):
         """
@@ -99,7 +131,7 @@ class AbstractPaas:
             value: O valor pode ser informado de alguma maneiras:
                 - Valor explicito: String com valor fixo a ser aplicado na variável.
                 - Composição com variável ambientes: No meio da String pode usar chaves referentes a outras variáveis de ambiente,
-                    ex.: http://{EMAIL_USER}:{EMAIL_PASS}@host.com. Os valores EMAIL_USER e EMAIL_PASS serão substítuidos pelo valor real da variável de ambiente.
+                    ex.: http://{EMAIL_USER}:{EMAIL_PASS}@deploy_host.com. Os valores EMAIL_USER e EMAIL_PASS serão substítuidos pelo valor real da variável de ambiente.
                 - Uso de serviços: Pode-se informar no valor a necessidade do uso de um serviço especifíco, ex.: service:postgres ou service:postgres:mydb,
                     onde service indica que um serviço deve ser usado, postgres é o nome do serviço e mydb é o nome do resource a ser usado.
                 - Uso de outras apps: Pode-se informar no valor a necessidade do uso de um link com outra aplicação, ex.: app:other-app,
@@ -136,6 +168,6 @@ class AbstractPaas:
             #Quando é um service, usa os serviços mapeados apartir do decorador @service.
             value = services[name](self, resource)
         if variable_type == 'app':
-            value = self.load_app(name)
+            value = self.app_url(name)
 
         return value

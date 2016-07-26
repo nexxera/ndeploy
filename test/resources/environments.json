@@ -1,1 +1,1 @@
-[{"conf_app_file": "git@myhost.com/myconfs/{group}/{name}.json", "name": "dev", "host": "integrated-dev.nexxera.com", "type": "dokku"}, {"type": "openshift", "conf_app_file": "git@myhost.com/myconfs/{group}/{name}.json", "name": "qa", "host": "qa.nexxera.com"}]
+[{"app_deployment_file_url": "git@myhost.com/myconfs/{group}/{name}.json", "name": "dev", "deploy_host": "integrated-dev.nexxera.com", "type": "dokku"}, {"type": "openshift", "app_deployment_file_url": "git@myhost.com/myconfs/{group}/{name}.json", "name": "qa", "deploy_host": "qa.nexxera.com"}]

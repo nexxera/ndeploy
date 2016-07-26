@@ -21,9 +21,9 @@ class EnvironmentTest(unittest.TestCase):
             os.removedirs(ndeploy.environment_repository.DIR_ENVS)
 
         core.add_environment(type="dokku",
-            name="integrated-dev",
-            host="integrated-dev.nexxera.com",
-            conf_app_file="git@gitlab.nexxera.com:group/my-app.git")
+                             name="integrated-dev",
+                             deploy_host="integrated-dev.nexxera.com",
+                             app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
 
         file = os.path.join(os.path.dirname(__file__), '../resources', 'model_environments.json')
         json_data_expected = open(file).read()
@@ -55,14 +55,14 @@ class EnvironmentTest(unittest.TestCase):
             os.removedirs(ndeploy.environment_repository.DIR_ENVS)
 
         core.add_environment(type="dokku",
-            name="integrated-dev",
-            host="integrated-dev.nexxera.com",
-            conf_app_file="git@gitlab.nexxera.com:group/my-app.git")
+                             name="integrated-dev",
+                             deploy_host="integrated-dev.nexxera.com",
+                             app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
 
         core.add_environment(type="openshift",
-            name="qa",
-            host="qa.nexxera.com",
-            conf_app_file="git@gitlab.nexxera.com:group/my-app.git")
+                             name="qa",
+                             deploy_host="qa.nexxera.com",
+                             app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
 
         core.remove_environment("qa")
 

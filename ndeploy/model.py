@@ -7,19 +7,19 @@ class Environment:
     Model para os dados de Environment.
     """
 
-    def __init__(self, type, name, host, conf_app_file=None):
+    def __init__(self, type, name, deploy_host, app_deployment_file_url=None):
         """
         Construtor
         Args:
             type: Tipo de ambiente, relacionado a ferramenta Paas a qual os dados do ambiente se refere, ex.: dokku, openshift, heroku, etc.
             name: Nome do Environment, ex.: dev, qa, stage, production, etc.
-            host: Host de acesso a ferramenta Paas onde é realizado o deploy.
-            conf_app_file: Template usado para baixar arquivo de configuração da aplicação a ser deployada.
+            deploy_host: Host de acesso a ferramenta Paas onde é realizado o deploy.
+            app_deployment_file_url: Template usado para baixar arquivo de configuração da aplicação a ser deployada.
         """
         self.type = type
         self.name = name
-        self.host = host
-        self.conf_app_file = conf_app_file
+        self.deploy_host = deploy_host
+        self.app_deployment_file_url = app_deployment_file_url
 
 
 class App:
@@ -40,7 +40,7 @@ class App:
                 O valor pode ser informado de alguma maneiras:
                 - Valor explicito: String com valor fixo a ser aplicado na variável.
                 - Composição com variável ambientes: No meio da String pode usar chaves referentes a outras variáveis de ambiente,
-                    ex.: http://{EMAIL_USER}:{EMAIL_PASS}@host.com. Os valores EMAIL_USER e EMAIL_PASS serão substítuidos pelo valor real da variável de ambiente.
+                    ex.: http://{EMAIL_USER}:{EMAIL_PASS}@deploy_host.com. Os valores EMAIL_USER e EMAIL_PASS serão substítuidos pelo valor real da variável de ambiente.
                 - Uso de serviços: Pode-se informar no valor a necessidade do uso de um serviço especifíco, ex.: service:postgres ou service:postgres:mydb,
                     onde service indica que um serviço deve ser usado, postgres é o nome do serviço e mydb é o nome do resource a ser usado.
                 - Uso de outras apps: Pode-se informar no valor a necessidade do uso de um link com outra aplicação, ex.: app:other-app,

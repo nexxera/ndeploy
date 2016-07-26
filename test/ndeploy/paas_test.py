@@ -19,7 +19,7 @@ class MockPaas(AbstractPaas):
         self.result['deploy_method'] = 'by_git_push'
         self.result['app'] = app
 
-    def load_app(self, name):
+    def app_url(self, name):
         return "http://%s.com" % (name)
 
     @service("postgres")
@@ -36,14 +36,14 @@ class AssembleModelTest(unittest.TestCase):
 
         os.environ['BLA'] = 'teste'
 
-        file = os.path.join(os.path.dirname(__file__), '../resources', 'deployed_app.json')
+        file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
         json_data = open(file).read()
 
         data = json.loads(json_data)
         app = App(**data)
 
         mock_paas = MockPaas()
-        mock_paas.deploy(app, Environment(name='dev', host='localhost', type='mock'))
+        mock_paas.deploy(app, Environment(name='dev', deploy_host='localhost', type='mock'))
 
         env_vars = dict(
             APP_ENV="Development",

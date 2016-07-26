@@ -19,7 +19,7 @@ class OpenshiftPaas(AbstractPaas):
         if name == 'postgres':
             return self._load_postgres(resource)
 
-    def load_app(self, name):
+    def app_url(self, name):
         return "http://%s.com" % (name)
 
     def _load_postgres(self, resource):
