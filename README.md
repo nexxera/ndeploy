@@ -8,7 +8,7 @@ Também é posśivel realizar o deploy em N plataformas PaaS, conforme implement
 Abaixo exemplos do arquivo de deployment:
 
 - Deploy de uma única aplicação, contendo os dados do ambiente pra deploy.
-
+```
 {
   "name": "my-app",
   "deploy_name": "super-app",
@@ -26,12 +26,12 @@ Abaixo exemplos do arquivo de deployment:
     "deploy-host": "dev.nexxera.com"
   }
 }
-
+```
 
 - Deploy de uma única aplicação, informando dados do ambiente via linha de comando:
 
 Comando: ndeploy deploy -f app.json -h dev.nexxera.com -t dokku
-
+```
 {
   "name": "my-app",
   "deploy_name": "super-app",
@@ -45,12 +45,12 @@ Comando: ndeploy deploy -f app.json -h dev.nexxera.com -t dokku
     "URL_OPEN_ID": "http://www.teste.com"
   }
 }
-
+```
 - Deploy de uma única aplicação, informando o ambiente via linha de comando:
 
 É necessário ter cadastrado o ambiente, através do comando: ndeploy addenv
 Comando: ndeploy deploy -f app.json -e dev
-
+```
 {
   "name": "my-app",
   "deploy_name": "super-app",
@@ -64,12 +64,12 @@ Comando: ndeploy deploy -f app.json -e dev
     "URL_OPEN_ID": "http://www.teste.com"
   }
 }
-
+```
 - Deploy de várias aplicações, informando o ambiente via linha de comando:
 
 É necessário ter cadastrado o ambiente, através do comando: ndeploy addenv
 Comando: ndeploy deploy -f app.json -e dev
-
+```
 {
     "apps" : [
     {
@@ -96,3 +96,4 @@ Comando: ndeploy deploy -f app.json -e dev
       }
     }
 }
+```
