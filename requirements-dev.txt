@@ -3,4 +3,3 @@ paver==1.2.4
 coverage==4.1
 pytest==2.9.2
 pytest-cov==2.2.1
-git+https://gitlab.nexxera.com/motor/nexxera-setuputils.git#egg=nexxera_setuputils-0.0.1
