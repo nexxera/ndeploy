@@ -1,0 +1,24 @@
+stages:
+- test
+- metric
+
+before_script:
+  - export CI_PROJECT_NAME=`basename $CI_PROJECT_DIR`
+  - export CI_PROJECT_GROUP=`dirname $CI_PROJECT_DIR | sed 's!.*/!!'`
+
+unit-test:
+    stage: test
+    tags:
+    - python-351
+    script:
+    - pip install -r requirements-dev.txt
+    - paver coverage
+
+metric-analyze:
+    stage: metric
+    tags:
+    - metrics
+    script:
+    - understand-python-analyze
+    - srccheck-analyze
+    #- s101-analyze

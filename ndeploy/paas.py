@@ -86,7 +86,7 @@ class AbstractPaas:
         Args:
             resource:
 
-        Returns:
+        Returns: Deve retornar uma String com url da aplicação.
 
         """
         pass
