@@ -44,6 +44,27 @@ Para instalar o NDeploy basta executar o comando:
 pip install git+https://git.nexxera.com/ci-utils/ndeploy.git
 ```
 
+# **Como alterar o código **
+Para desenvolver o código é preciso instalar os requirements de desenvolvimento. Para isso proceda da seguinte maneira:
+
+Clonar o repositório:
+
+```
+git clone https://git.nexxera.com/ci-utils/ndeploy.git
+```
+
+Instalar dependências:
+
+```
+pip install -r "requirements-dev.txt" 
+```
+
+Rodar testes:
+
+```
+paver coverage 
+```
+
 # **Exemplos do arquivo de deployment**
 
 - [Deploy de uma única aplicação, contendo os dados do ambiente pra deploy.](ci-utils/ndeploy$1)
