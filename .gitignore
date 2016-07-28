@@ -92,3 +92,6 @@ ENV/
 
 /.coverage
 /reports/
+
+#idea project
+.idea/
