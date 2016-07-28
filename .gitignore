@@ -82,6 +82,7 @@ celerybeat-schedule
 
 # virtualenv
 venv/
+.venv/
 ENV/
 
 # Spyder project settings
@@ -94,4 +95,4 @@ ENV/
 /reports/
 
 #idea project
-.idea/
+.idea/*
