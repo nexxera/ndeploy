@@ -24,8 +24,7 @@ class AssembleModelTest(unittest.TestCase):
                            image="gitlab-dreg.nexxera.com/group/my-app",
                            env_vars=dict(APP_ENV="Development",EMAIL_HOST="smtp@domain.com"))
 
-        self.assertEqual(app.__dict__,app_expected.__dict__)
-
+        self.assertEqual(app.__dict__, app_expected.__dict__)
 
     def test_should_assemble_environment(self):
         file = os.path.join(os.path.dirname(__file__), '../resources', 'model_environment.json')
