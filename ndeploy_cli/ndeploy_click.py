@@ -31,13 +31,13 @@ def delenv(**kwargs):
 def listenv(**kwargs):
     environments = core.list_environments()
     for environment in environments:
-        print("name:%s, \ttype:%s, \tdeploy_host:%s" % (environment.name, environment.type, environment.host))
+        print("name:%s, \ttype:%s, \tdeploy_host:%s" % (environment.name, environment.type, environment.deploy_host))
 
 
 @ndeploy.command()
 @click.option('-f','--file', prompt='App deployment file', help="App deployment file.")
-@click.option('-g','--group', prompt="Group name of project", help="Group name of project.")
-@click.option('-n','--name', prompt="Name project", help="Name project.")
+@click.option('-g','--group', help="Group name of project.")
+@click.option('-n','--name', help="Name project.")
 @click.option('-e','--environment', prompt="Environment configured", help="Environment configured.")
 def deploy(**kwargs):
     core.deploy(file=kwargs['file'],

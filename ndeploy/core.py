@@ -22,7 +22,7 @@ def add_environment(name, type, deploy_host, app_deployment_file_url):
         type: Tipo de ambiente, relacionado a ferramenta Paas a qual os dados do ambiente se refere, ex.: dokku, openshift, heroku, etc.
         name: Nome do Environment, ex.: dev, qa, stage, production, etc.
         deploy_host: Host de acesso a ferramenta Paas onde é realizado o deploy.
-        conf_app_file: Template usado para baixar arquivo de configuração da aplicação a ser deployada.
+        app_deployment_file_url: Template usado para baixar arquivo de configuração da aplicação a ser deployada.
 
     Returns:
 

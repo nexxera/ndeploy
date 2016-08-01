@@ -9,6 +9,7 @@ from ndeploy.paas import AbstractPaas, service
 class MockPaas(AbstractPaas):
 
     def __init__(self):
+        super().__init__()
         self.result = {}
 
     def deploy_by_image(self, app):
@@ -53,3 +54,4 @@ class AssembleModelTest(unittest.TestCase):
             URL_OPEN_ID="http://www.teste.com")
 
         self.assertEqual(app.env_vars, env_vars)
+

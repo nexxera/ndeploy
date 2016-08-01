@@ -12,7 +12,7 @@ class EnvironmentTest(unittest.TestCase):
     Test ndeploy functions.
     """
 
-    def test_add_enviroments(self):
+    def test_add_environments(self):
 
         environment_repository.DIR_ENVS = os.environ['HOME'] + "/.ndeploy-tmp"
         environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
@@ -39,8 +39,7 @@ class EnvironmentTest(unittest.TestCase):
 
         self.assertEqual(data, data_expected)
 
-
-    def test_remove_enviroments(self):
+    def test_list_environments(self):
 
         environment_repository.DIR_ENVS = os.path.join(os.path.dirname(__file__), '../resources')
         environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
@@ -49,8 +48,7 @@ class EnvironmentTest(unittest.TestCase):
 
         self.assertEqual(len(environments), 2)
 
-
-    def test_remove_enviroments(self):
+    def test_remove_environments(self):
         environment_repository.DIR_ENVS = os.environ['HOME'] + "/.ndeploy-tmp"
         environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
 

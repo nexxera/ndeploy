@@ -5,9 +5,9 @@
   "image": "gitlab-dreg.nexxera.com/group/my-app",
   "env_vars": {
     "APP_ENV": "Development",
-    "TESTE": "Oi {BLA}",
-    "APP_NOTIFICATION_URL": "app:notification",
-    "DATABASE_URL": "service:postgres:teste",
+    "TESTE": "Oi {env:BLA}",
+    "APP_NOTIFICATION_URL": "{app:notification}",
+    "DATABASE_URL": "{service:postgres:teste}",
     "URL_OPEN_ID": "http://www.teste.com"
   }
 }
