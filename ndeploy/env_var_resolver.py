@@ -61,7 +61,6 @@ class EnvVarResolver:
 
         return formatted_value
 
-
     def _resolve_var(self, parsed_var):
         """
         Recebe uma tupla contendo os pedaços da variável e retorna uma string com o valor resolvido

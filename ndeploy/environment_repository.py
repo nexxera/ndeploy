@@ -14,105 +14,110 @@ DIR_ENVS = os.environ['HOME']+"/.ndeploy"
 FILE_ENVS = DIR_ENVS + "/environments.json"
 
 
-def add_environment(environment):
+class EnvironmentRepository:
     """
-    Adiciona um novo Environment e salva o arquivo de environments
-    Args:
-        environment: Environment a ser salvo
-
-    Returns:
-
+    Classe responsável por gerenciar environments dentro do ndeploy
     """
-    enviroments = _load_environments_dict()
 
-    for _environment in enviroments:
-        if _environment['name'] == environment.name:
-            sys.exit('Environment already exists!')
+    def __init__(self):
+        self.environments = self._load_environments_dict()
 
-    enviroments.append(environment)
-    _save_environments(enviroments)
+    def add_environment(self, environment):
+        """
+        Adiciona um novo Environment e salva o arquivo de environments
+        Args:
+            environment: Environment a ser salvo
 
+        Returns:
 
-def remove_environment(name):
-    """
-    Remove o Environment informado e salva o arquivo de environments
-    Args:
-        name: Nome do Environment a ser removido.
+        """
+        # self.enviroments = _load_environments_dict()
 
-    Returns:
+        for _environment in self.environments:
+            if _environment.name == environment.name:
+                sys.exit('Environment already exists!')
 
-    """
-    enviroments = _load_environments_dict()
+        self.environments.append(environment)
+        self._save_environments()
 
-    for _environment in enviroments:
-        if _environment['name'] == name:
-            enviroments.remove(_environment)
+    def remove_environment(self, name):
+        """
+        Remove o Environment informado e salva o arquivo de environments
+        Args:
+            name: Nome do Environment a ser removido.
 
-    _save_environments(enviroments)
+        Returns:
 
+        """
+        # enviroments = _load_environments_dict()
 
-def list_environments():
-    """
-    Carrega os Environments salvos.
-    Returns: Lista de objetos do tipo Environment
+        for _environment in self.environments:
+            if _environment.name == name:
+                self.environments.remove(_environment)
 
-    """
-    _enviroments = _load_environments_dict()
-    enviroments = []
+        self._save_environments()
 
-    for _enviroment in _enviroments:
-        enviroment = Environment(**_enviroment)
-        enviroments.append(enviroment)
+    def list_environments(self):
+        """
+        Carrega os Environments salvos.
+        Returns: Lista de objetos do tipo Environment
 
-    return enviroments
+        """
+        return self.environments
+        # _enviroments = _load_environments_dict()
+        # environments = []
+        #
+        # for _environment in self.environments:
+        #     environment = Environment(**_environment)
+        #     environments.append(environment)
+        #
+        # return environments
 
+    def load_environment(self, name):
+        """
+        Carrega um Environment específico que esteja salvo.
+        Args:
+            name: Nome do Environment a ser carregado.
 
-def load_environment(name):
-    """
-    Carrega um Environment específico que esteja salvo.
-    Args:
-        name: Nome do Environment a ser carregado.
+        Returns: Objeto Environment com os dados salvos.
 
-    Returns: Objeto Environment com os dados salvos.
+        """
+        # enviroments = _load_environments_dict()
 
-    """
-    enviroments = _load_environments_dict()
-    enviroment = None
+        for env in self.environments:
+            if env.name == name:
+                return env
 
-    for _environment in enviroments:
-        if _environment['name'] == name:
-            enviroment = Environment(**_environment)
+        return None
 
-    return enviroment
+    def has_environment(self, name):
+        return self.load_environment(name) is not None
 
+    @staticmethod
+    def _load_environments_dict():
+        """
+        Carrega os Environments salvos.
+        Returns: Lista de dicionários com dados salvos.
 
-def _load_environments_dict():
-    """
-    Carrega os Environments salvos.
-    Returns: Lista de dicionários com dados salvos.
+        """
+        env_list = []
+        if os.path.isfile(FILE_ENVS):
+            json_data = open(FILE_ENVS).read()
+            data = json.loads(json_data, object_hook=lambda j: Environment(**j))
+            env_list = data
+        return env_list
 
-    """
-    enviroments = []
-    if os.path.isfile(FILE_ENVS):
-        json_data = open(FILE_ENVS).read()
-        data = json.loads(json_data)
-        enviroments = data
-    return enviroments
+    def _save_environments(self):
+        """
+        Salva os Environments no arquivo local de persistência no formato Json.
 
+        Returns:
 
-def _save_environments(enviroments):
-    """
-    Salva os Environments no arquivo local de persistência no formato Json.
-    Args:
-        enviroments: Lista de Environments a ser salvos.
+        """
+        if not os.path.isdir(DIR_ENVS):
+            os.makedirs(DIR_ENVS)
 
-    Returns:
-
-    """
-    if not os.path.isdir(DIR_ENVS):
-        os.makedirs(DIR_ENVS)
-
-    with open(FILE_ENVS, 'w+') as fp:
-        json_data = json.dumps(enviroments, default=lambda o: o.__dict__);
-        fp.write(json_data)
-        fp.close()
+        with open(FILE_ENVS, 'w+') as fp:
+            json_data = json.dumps(self.environments, default=lambda o: o.__dict__);
+            fp.write(json_data)
+            fp.close()

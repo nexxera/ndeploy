@@ -1,3 +1,5 @@
+requests
+injector
 gitpython
 Jinja2
 timeout-decorator
