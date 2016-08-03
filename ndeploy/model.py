@@ -28,7 +28,6 @@ class App:
     Model para os dados de um aplicação a ser deployada.
     """
 
-    # def __init__(self, name, deploy_name=None, repository=None, image=None, env_vars=None):
     def __init__(self, name, **args):
         """
         Construtor

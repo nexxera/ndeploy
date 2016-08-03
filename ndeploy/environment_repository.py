@@ -13,11 +13,6 @@ from os import chmod
 from Crypto.PublicKey import RSA
 
 
-
-# DIR_ENVS = os.environ['HOME']+"/.ndeploy"
-# FILE_ENVS = DIR_ENVS + "/environments.json"
-
-
 class EnvironmentRepository:
     """
     Classe responsável por gerenciar environments dentro do ndeploy
@@ -89,7 +84,6 @@ class EnvironmentRepository:
             content_file.write(key.exportKey('PEM'))
         pubkey = key.publickey()
         with open(self.get_env_public_key_path(env), 'wb') as content_file:
-            # public = self._create_public_key(key)
             public = pubkey.exportKey('OpenSSH')
             content_file.write(public)
 
@@ -102,8 +96,6 @@ class EnvironmentRepository:
         Returns:
 
         """
-        # enviroments = _load_environments_dict()
-
         for _environment in self.environments:
             if _environment.name == name:
                 self.environments.remove(_environment)
@@ -117,14 +109,6 @@ class EnvironmentRepository:
 
         """
         return self.environments
-        # _enviroments = _load_environments_dict()
-        # environments = []
-        #
-        # for _environment in self.environments:
-        #     environment = Environment(**_environment)
-        #     environments.append(environment)
-        #
-        # return environments
 
     def load_environment(self, name):
         """
@@ -135,8 +119,6 @@ class EnvironmentRepository:
         Returns: Objeto Environment com os dados salvos.
 
         """
-        # enviroments = _load_environments_dict()
-
         for env in self.environments:
             if env.name == name:
                 return env

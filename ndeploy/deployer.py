@@ -1,6 +1,5 @@
 import json
 import shutil
-import git
 from subprocess import call
 import os.path
 from ndeploy.model import App, Environment
@@ -48,7 +47,6 @@ class Deployer:
             shutil.rmtree(local_folder)
 
         print("getting config file from " + repo_url)
-        # git.Repo.clone_from(repo_url, "tmp")
         call(["ssh-agent", "bash", "-c", "'ssh-add {rsa_path}; git clone {repo_url} {local_folder}'"
              .format({"rsa_path": rsa_path, "repo_url": repo_url, "local_folder": local_folder})])
 
