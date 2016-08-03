@@ -1,4 +1,5 @@
 import click
+import os
 
 from ndeploy import core
 from ndeploy import environment_repository
@@ -11,7 +12,8 @@ from ndeploy import paas
 # from ndeploy.paas import PaasRepository
 
 # dependencies resolution
-env_repository = environment_repository.EnvironmentRepository()
+NDEPLOY_HOME = os.environ['HOME']+"/.ndeploy"
+env_repository = environment_repository.EnvironmentRepository(NDEPLOY_HOME)
 paas_repository = paas.PaasRepository()
 deployer = deployer.Deployer(paas_repository, env_repository)
 ndeploy_core = core.NDeployCore(env_repository, deployer)
@@ -45,6 +47,11 @@ def listenv(**kwargs):
     for environment in environments:
         print("name:%s, \ttype:%s, \tdeploy_host:%s" % (environment.name, environment.type, environment.deploy_host))
 
+
+@ndeploy.command()
+@click.option('-n', '--name', prompt='Environment name', help="Environment name.")
+def keyenv(**kwargs):
+    print(ndeploy_core.get_environment_key(kwargs['name']))
 
 @ndeploy.command()
 @click.option('-f','--file', help="App deployment file.")

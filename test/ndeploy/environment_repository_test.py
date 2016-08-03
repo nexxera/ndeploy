@@ -3,8 +3,6 @@ import os
 import unittest
 import shutil
 
-import ndeploy.environment_repository
-from ndeploy import environment_repository
 from ndeploy.environment_repository import EnvironmentRepository
 from ndeploy.model import Environment
 
@@ -15,69 +13,71 @@ class EnvironmentTest(unittest.TestCase):
     """
 
     def setUp(self):
-        environment_repository.DIR_ENVS = os.environ['HOME'] + "/.ndeploy-tmp"
-        environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
+        self.ndeploy_dir = os.environ['HOME'] + "/.ndeploy-tmp"
 
-        if os.path.isdir(environment_repository.DIR_ENVS):
-            shutil.rmtree(environment_repository.DIR_ENVS)
+        if os.path.isdir(self.ndeploy_dir):
+            shutil.rmtree(self.ndeploy_dir)
 
-        self.env_repo = EnvironmentRepository()
+        self.env_repo = EnvironmentRepository(self.ndeploy_dir)
 
     def test_add_environments(self):
 
-        self._add_environment()
+        self._add_integrated_dev_environment()
 
         file = os.path.join(os.path.dirname(__file__), '../resources', 'model_environments.json')
         json_data_expected = open(file).read()
         data_expected = json.loads(json_data_expected)
 
-        json_data = open(ndeploy.environment_repository.FILE_ENVS).read()
+        json_data = open(self.env_repo.get_environments_file()).read()
         data = json.loads(json_data)
 
-        os.remove(ndeploy.environment_repository.FILE_ENVS)
+        os.remove(self.env_repo.get_environments_file())
 
         self.assertEqual(data, data_expected)
 
-    def _add_environment(self):
+    def test_add_environment_should_create_rsa_key_with_same_name_of_env(self):
+        self._add_integrated_dev_environment()
 
-        environment = Environment(
-            type="dokku",
-            name="integrated-dev",
-            deploy_host="integrated-dev.nexxera.com",
-            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
-        self.env_repo.add_environment(environment)
+        self.assertTrue(os.path.exists(os.path.join(self.env_repo.get_ndeploy_dir(), ".ssh", "id_rsa_integrated-dev")))
+        self.assertTrue(os.path.exists(os.path.join(self.env_repo.get_ndeploy_dir(), ".ssh", "id_rsa_integrated-dev.pub")))
 
     def test_list_environments(self):
-
-        environment_repository.DIR_ENVS = os.path.join(os.path.dirname(__file__), '../resources')
-        environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
-
-        environments = EnvironmentRepository().list_environments()
+        test_ndeploy_dir = os.path.join(os.path.dirname(__file__), '../resources')
+        environments = EnvironmentRepository(test_ndeploy_dir).list_environments()
 
         self.assertEqual(len(environments), 2)
 
     def test_remove_environments(self):
-        self._add_environment()
-
-        environment_qa = Environment(
-            type="openshift",
-            name="qa",
-            deploy_host="qa.nexxera.com",
-            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
-        self.env_repo.add_environment(environment_qa)
+        self._add_integrated_dev_environment()
+        self._add_qa_environment()
 
         self.env_repo.remove_environment("qa")
 
         environments = self.env_repo.list_environments()
 
-        os.remove(ndeploy.environment_repository.FILE_ENVS)
+        os.remove(self.env_repo.get_environments_file())
         self.assertEqual(len(environments), 1)
 
     def test_load_enviroment(self):
-        environment_repository.DIR_ENVS = os.path.join(os.path.dirname(__file__), '../resources')
-        environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
-
-        environment = EnvironmentRepository().load_environment("dev")
+        test_ndeploy_dir = os.path.join(os.path.dirname(__file__), '../resources')
+        environment = EnvironmentRepository(test_ndeploy_dir).load_environment("dev")
 
         self.assertEqual(environment.type, "dokku")
         self.assertEqual(environment.deploy_host, "integrated-dev.nexxera.com")
+
+    def _add_integrated_dev_environment(self):
+        self._add_environment(Environment(
+            type="dokku",
+            name="integrated-dev",
+            deploy_host="integrated-dev.nexxera.com",
+            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git"))
+
+    def _add_qa_environment(self):
+        self._add_environment(Environment(
+            type="openshift",
+            name="qa",
+            deploy_host="qa.nexxera.com",
+            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git"))
+
+    def _add_environment(self, env):
+        self.env_repo.add_environment(env)

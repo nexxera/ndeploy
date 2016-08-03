@@ -1,6 +1,7 @@
 import json
 import shutil
 import git
+from subprocess import call
 import os.path
 from ndeploy.model import App, Environment
 from ndeploy.exception import InvalidArgumentError, AppConfigFileCloneError
@@ -15,13 +16,13 @@ class Deployer:
         self.paas_repository = paas_repository
         self.env_repository = env_repository
 
-    def deploy(self, file=None, name=None, group=None, environment=None):
+    def deploy(self, file=None, group=None, name=None, environment=None):
         """
-        Método responsável por tratar os parâmetros pelo usuário e tentar fazer o deploy da aplicação.
+        Método responsável por tratar os parâmetros passados pelo usuário e tentar fazer o deploy da aplicação.
 
         :param file:
-        :param name:
         :param group:
+        :param name:
         :param environment:
         :return:
         """
@@ -39,13 +40,17 @@ class Deployer:
 
         self.paas_repository.get_paas_for(env.type).deploy(app, env)
 
-    def _get_remote_conf(self, repo_url, relative_path):
+    def _get_remote_conf(self, repo_url, relative_path, rsa_path):
 
-        if os.path.isdir("tmp"):
-            shutil.rmtree("tmp")
+        local_folder = "tmp"
+
+        if os.path.isdir(local_folder):
+            shutil.rmtree(local_folder)
 
         print("getting config file from " + repo_url)
-        git.Repo.clone_from(repo_url, "tmp")
+        # git.Repo.clone_from(repo_url, "tmp")
+        call(["ssh-agent", "bash", "-c", "'ssh-add {rsa_path}; git clone {repo_url} {local_folder}'"
+             .format({"rsa_path": rsa_path, "repo_url": repo_url, "local_folder": local_folder})])
 
         cloned_file = os.path.join("tmp", relative_path)
         if not os.path.isfile(cloned_file):
@@ -58,9 +63,11 @@ class Deployer:
 
     def _resolve_remote_app_file(self, group, name, environment):
         assert environment
+        assert group
 
+        rsa_key = self.env_repository.get_env_private_key_path(environment.name)
         repo_url = environment.app_deployment_file_url.format(group)
-        app_data = self._get_remote_conf(repo_url, os.path.join(name, "app.json"))
+        app_data = self._get_remote_conf(repo_url, os.path.join(name, "app.json"), rsa_key)
 
         return app_data
 

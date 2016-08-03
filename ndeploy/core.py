@@ -55,6 +55,10 @@ class NDeployCore:
         """
         return self.environment_repository.list_environments()
 
+    def get_environment_key(self, name):
+        return self.environment_repository.get_environment_key(name)
+
+
     def deploy(self, file=None, group=None, name=None, environment=None):
         """
         Faz o deploy de uma aplicação.
