@@ -27,22 +27,6 @@ def service(name):
         services[name] = func
     return wrap
 
-def load_avaliable_paas():
-    """
-    Carrega as implementações de PaaS
-    Returns: dicionário com o nome/instancia das PaaS implementadas.
-    """
-
-    #Avaliar posteriormente a possibilidade de usuário poder incluir novos módulos.
-    avaliable_paas_paths = ["supported_paas"]
-
-    avaliable_paas = {}
-    for finder_module, name, _ in pkgutil.iter_modules(avaliable_paas_paths):
-        module = importlib.import_module('%s.%s' % (finder_module.path, name))
-        for name, cls in inspect.getmembers(module):
-            if inspect.isclass(cls) and issubclass(cls, AbstractPaas) and cls.__type__:
-                avaliable_paas[cls.__type__] = cls()
-    return avaliable_paas
 
 
 class AbstractPaas:
@@ -125,4 +109,34 @@ class AbstractPaas:
         """
         return self.env_resolver.resolve_vars(env_vars, self, services)
 
+
+class PaasRepository:
+    """
+    Repositório de AbstractPaas.
+    Carrega módulos definidos no diretório supported_paas que implementem AbstractPaas
+    """
+
+    def __init__(self):
+        self.available_paas = PaasRepository.load_available_paas()
+
+    def get_available_paas(self):
+        return self.available_paas
+
+    @staticmethod
+    def load_available_paas():
+        """
+        Carrega as implementações de PaaS
+        Returns: dicionário com o nome/instancia das PaaS implementadas.
+        """
+
+        #Avaliar posteriormente a possibilidade de usuário poder incluir novos módulos.
+        avaliable_paas_paths = ["supported_paas"]
+
+        _available_paas = {}
+        for finder_module, name, _ in pkgutil.iter_modules(avaliable_paas_paths):
+            module = importlib.import_module('%s.%s' % (finder_module.path, name))
+            for name, cls in inspect.getmembers(module):
+                if inspect.isclass(cls) and issubclass(cls, AbstractPaas) and cls.__type__:
+                    _available_paas[cls.__type__] = cls()
+        return _available_paas
 

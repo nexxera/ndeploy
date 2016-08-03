@@ -1,3 +1,6 @@
+requests
+injector
+git+https://github.com/dlitz/pycrypto.git@v2.7a1
 gitpython
 Jinja2
 timeout-decorator

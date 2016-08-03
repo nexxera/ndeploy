@@ -2,6 +2,7 @@
 Models usados no processo de deploy.
 """
 
+
 class Environment:
     """
     Model para os dados de Environment.
@@ -27,7 +28,7 @@ class App:
     Model para os dados de um aplicação a ser deployada.
     """
 
-    def __init__(self, name, deploy_name=None, repository=None, image=None, env_vars=None):
+    def __init__(self, name, **args):
         """
         Construtor
         Args:
@@ -47,7 +48,7 @@ class App:
                     onde app indica que um link com outra app deve ser usado, other-app é o nome da app que deve ser verificado a url para composição do link.
         """
         self.name = name
-        self.deploy_name = deploy_name
-        self.repository = repository
-        self.image = image
-        self.env_vars = env_vars
+        self.deploy_name = args["deploy_name"] if "deploy_name" in args else ""
+        self.repository = args["repository"] if "repository" in args else ""
+        self.image = args["image"] if "image" in args else ""
+        self.env_vars = args["env_vars"] if "env_vars" in args else ""
