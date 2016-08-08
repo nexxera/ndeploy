@@ -89,7 +89,7 @@ class Deployer:
         if app_data and "environment" in app_data:
             env = app_data["environment"]
             return Environment(env["type"], env["name"],
-                               env["deploy-host"])
+                               env["deploy_host"])
 
         raise InvalidArgumentError("cant resolve any environment. "
                                    "Either pass an environment in app "

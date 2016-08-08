@@ -6,11 +6,6 @@ from ndeploy import environment_repository
 from ndeploy import deployer
 from ndeploy import paas
 
-# from ndeploy.core import NDeployCore
-# from ndeploy.environment_repository import EnvironmentRepository
-# from ndeploy.deployer import Deployer
-# from ndeploy.paas import PaasRepository
-
 # dependencies resolution
 NDEPLOY_HOME = os.environ['HOME']+"/.ndeploy"
 env_repository = environment_repository.EnvironmentRepository(NDEPLOY_HOME)

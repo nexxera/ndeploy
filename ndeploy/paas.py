@@ -40,7 +40,7 @@ class AbstractPaas:
         self.env_resolver = EnvVarResolver()
 
     @abstractmethod
-    def deploy_by_git_push(self, app):
+    def deploy_by_git_push(self, app, env):
         """
         Método usado para realização de deploy através de git push no diretório informado em app.repository ou do diretório corrente.
 
@@ -54,11 +54,12 @@ class AbstractPaas:
 
 
     @abstractmethod
-    def deploy_by_image(self, app):
+    def deploy_by_image(self, app, env):
         """
         Método usado para realização de deploy através de imagem docker conforme url informada em app.image.
         Args:
-            app:
+            app: Objecto App com os dados que serão usados para o deploy
+            env: Objecto Environment com os dados que serão usados para o deploy
 
         Returns:
 
@@ -89,14 +90,14 @@ class AbstractPaas:
 
         """
 
-        print("Selected PaaS: %s" % (environment.type))
+        print("Selected PaaS: %s" % environment.type)
         app.env_vars = self._resolve_env_vars(app.env_vars)
 
-        #Quando informado URL da imagem docker, essa tem prioridade de deploy.
+        # quando informado URL da imagem docker, essa tem prioridade de deploy.
         if app.image:
-            self.deploy_by_image(app)
+            self.deploy_by_image(app, environment)
         else:
-            self.deploy_by_git_push(app)
+            self.deploy_by_git_push(app, environment)
 
     def _resolve_env_vars(self, env_vars):
         """
@@ -121,6 +122,9 @@ class PaasRepository:
 
     def get_available_paas(self):
         return self.available_paas
+
+    def get_paas_for(self, paas_type):
+        return self.available_paas[paas_type]
 
     @staticmethod
     def load_available_paas():

@@ -13,7 +13,7 @@
   "environment" : {
     "name": "dev",
     "type": "dokku",
-    "deploy-host": "dev.nexxera.com"
+    "deploy_host": "dev.nexxera.com"
   }
 
 }

@@ -12,11 +12,11 @@ class MockPaas(AbstractPaas):
         super().__init__()
         self.result = {}
 
-    def deploy_by_image(self, app):
+    def deploy_by_image(self, app, env):
         self.result['deploy_method'] = 'by_image'
         self.result['app'] = app
 
-    def deploy_by_git_push(self, app):
+    def deploy_by_git_push(self, app, env):
         self.result['deploy_method'] = 'by_git_push'
         self.result['app'] = app
 

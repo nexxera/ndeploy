@@ -1,5 +1,16 @@
-
+import os
 from ndeploy.paas import AbstractPaas
+from subprocess import call
+from ndeploy.utils import *
+import socket
+from ndeploy.exception import NDeployError
+import getpass
+
+
+class OpenShiftNotLoggedError(NDeployError):
+    def __str__(self):
+        return "Could not continue deploying because openshift command line is not logged. " \
+               "You have to execute 'oc login' before executing ndeploy."
 
 class OpenshiftPaas(AbstractPaas):
     """
@@ -8,12 +19,38 @@ class OpenshiftPaas(AbstractPaas):
 
     __type__ = 'openshift'
 
-    def deploy_by_image(self, app):
-        print(app.env_vars)
-        print("Deploying app: %s, image: %s" % (app.name, app.image))
+    def deploy_by_image(self, app, env):
+        self.handle_login(env)
+        self.configure_project(env)
+        self.create_app_by_image(app, env)
+        self.expose_service(app, env)
 
-    def deploy_by_git_push(self, app):
-        print("Deploying app: %s, repository: %s" % (app.name, app.repository))
+    def deploy_by_git_push(self, app, env):
+        self.handle_login(env)
+        self.configure_project(env)
+        self.create_app_by_source(app, env)
+        self.expose_service(app, env)
+
+    def create_app_by_image(self, app, env):
+        print(app.env_vars)
+        print("Deploying app by image: %s, image: %s" % (app.name, app.image))
+        project = self.get_openshift_area_name(env)
+        execute_program("oc new-app {image_url} -n {project} --name {app_name}"
+                        .format(image_url=app.image, project=project,
+                                app_name=app.name))
+        execute_program("oc deploy {app_name} --latest -n {project}"
+                        .format(app_name=app.name, project=project))
+
+    def create_app_by_source(self, app, env):
+        print("Deploying app by source: %s, group: repository: %s" % (app.name, app.repository))
+        project = self.get_openshift_area_name(env)
+        execute_program("oc new-app {source_repo} -n {project} --name {app_name}"
+                        .format(source_repo=app.repository, project=project, app_name=app.name))
+        # call(["oc", "new-app", app.repository, "-n", self.get_openshift_area_name(env), "--name", app.name])
+        os.system("oc patch bc %s -p '{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}'" % app.name)
+
+        execute_program("oc start-build {app_name} -n {project}"
+                        .format(app_name=app.name, project=project))
 
     def load_service(self, name, resource):
         if name == 'postgres':
@@ -24,4 +61,89 @@ class OpenshiftPaas(AbstractPaas):
 
     def _load_postgres(self, resource):
         return "postgres://user:senha@localhost:5432/%s" % (resource)
+
+    def is_logged(self):
+        cmd = "oc whoami"
+        try:
+            err, out = execute_program_with_timeout(cmd)
+            print(err)
+            print(out)
+            if "system:anonymous" in err or "provide credentials" in err:
+                return False
+            else:
+                return True
+        except timeout_decorator.TimeoutError:
+            return False
+
+    def login(self, env):
+        # login has to be by IP because of teh https/ssl signed certificate
+        ip = socket.gethostbyname(env.deploy_host)
+        execute_program("oc login https://%s:8443" % ip)
+
+    def handle_login(self, env):
+        if not self.is_logged():
+            # raising exception for now. We need to think in a better solution for this
+            raise OpenShiftNotLoggedError
+            # self.login(env)
+
+    def expose_service(self, app, env):
+        route_name = app.name
+        project = self.get_openshift_area_name(env)
+
+        if not self.route_exist(route_name, project):
+            self.create_route(app, env)
+        else:
+            print("Route {} already exists. Using it.".format(route_name))
+
+    def create_route(self, app, env):
+        cmd = "oc expose service/%s --hostname=%s -n %s" % (app.name, self.get_openshift_app_host(app, env),
+                                                            self.get_openshift_area_name(env))
+        print("...Creating app route for %s :  %s" % (app.name, cmd))
+        err, out = execute_program(cmd)
+        if len(err) > 0:  # some other error
+            print(err)
+        else:
+            print(out)
+
+    def get_openshift_app_host(self, app, env):
+        return "%s-%s.%s" % (app.name, self.get_openshift_area_name(env), env.deploy_host)
+
+    def get_openshift_area_name(self, env):
+        return env.name
+        # ver como vamos tratar isso. a principio estamos usando o nome do env como project. no ndeploy original
+        # usávamos o nome do usuário, caso a 'area' não fosse passada como parâmetro
+        # default = getpass.getuser()
+        # return options.get("area", default).replace(".", "")
+
+    def project_exist(self, project):
+        return not program_return_error("oc get project " + project)
+
+    def secret_exist(self, secret, project):
+        return not program_return_error("oc get secret {secret_name} -n {project}"
+                                        .format(secret_name=secret, project=project))
+
+    def route_exist(self, route, project):
+        return not program_return_error("oc get routes {route} -n {project}"
+                                        .format(route=route, project=project))
+
+    def configure_project(self, env):
+        project = self.get_openshift_area_name(env)
+        self.create_project_if_does_not_exist(project)
+        self.create_secret_if_does_not_exist(project)
+
+    def create_project_if_does_not_exist(self, project):
+        if not self.project_exist(project):
+            execute_program("oc new-project " + project)
+        else:
+            print("...Project {} already exists. Using it.".format(project))
+
+    def create_secret_if_does_not_exist(self, project):
+        if not self.secret_exist("scmsecret", project):
+            os.system("oc secrets new scmsecret ssh-privatekey=$HOME/.ssh/id_rsa -n {}".format(project))
+            execute_program("oc secrets add serviceaccount/builder secrets/scmsecret -n {}".format(project))
+        else:
+            print("...Secret {} already exists. Using it.".format("scmsecret"))
+
+
+
 

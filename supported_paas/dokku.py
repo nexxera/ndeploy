@@ -10,11 +10,11 @@ class DokkuPaas(AbstractPaas):
 
     __type__ = 'dokku'
 
-    def deploy_by_image(self, app):
+    def deploy_by_image(self, app, env):
         print("Deploying app: %s, image: %s" % (app.name, app.image))
         pprint.pprint(app.env_vars)
 
-    def deploy_by_git_push(self, app):
+    def deploy_by_git_push(self, app, env):
         print("Deploying app: %s, repository: %s" % (app.name, app.repository))
         pprint.pprint(app.env_vars)
 
