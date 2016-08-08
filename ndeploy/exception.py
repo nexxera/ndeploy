@@ -1,13 +1,13 @@
 
 
-class Error(Exception):
+class NDeployError(Exception):
     """
     Base class for exceptions in ndeploy
     """
     pass
 
 
-class InvalidArgumentError(Exception):
+class InvalidArgumentError(NDeployError):
     """
     Exception thrown when invalid arguments are passed to ndeploy
     """
@@ -15,7 +15,7 @@ class InvalidArgumentError(Exception):
         self.message = message
 
 
-class AppConfigFileCloneError(Exception):
+class AppConfigFileCloneError(NDeployError):
     """
     Throws when ndeploy could not get remote config file for a deploy
     """

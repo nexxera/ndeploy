@@ -1,0 +1,15 @@
+{
+  "name": "hello5",
+  "deploy_name": "hello-world",
+  "repository": "python:3.5~git@gitlab.nexxera.com:isaac.souza/hello-world-ci-python.git",
+  "env_vars": {
+    "APP_ENV": "Development",
+    "DATABASE_URL": "{service:postgres:teste}"
+  },
+  "environment" : {
+    "name": "test",
+    "type": "openshift",
+    "deploy_host": "cloudint.nexxera.com"
+  }
+}
+
