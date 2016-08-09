@@ -4,6 +4,7 @@ import unittest
 
 from ndeploy.model import App, Environment
 from ndeploy.paas import AbstractPaas, service
+from unittest.mock import MagicMock
 
 
 class MockPaas(AbstractPaas):
@@ -44,6 +45,7 @@ class AssembleModelTest(unittest.TestCase):
         app = App(**data)
 
         mock_paas = MockPaas()
+        mock_paas.set_shell_exec(MagicMock())
         mock_paas.deploy(app, Environment(name='dev', deploy_host='localhost', type='mock'))
 
         env_vars = dict(
