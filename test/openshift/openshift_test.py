@@ -49,12 +49,15 @@ class OpenShiftTest(unittest.TestCase):
 
     def test_deploy_by_image(self):
         self._deploy_by_image()
-        self.openshift.openshift_exec.assert_any_call("new-app image1.dev.nexxera.com --name myapp", "dev")
-        self.openshift.openshift_exec.assert_any_call("deploy myapp --latest", "dev")
+        self.openshift.openshift_exec.assert_any_call(
+            "new-app image1.dev.nexxera.com --name myapp ", "dev")
+        self.openshift.openshift_exec.assert_any_call(
+            "deploy myapp --latest", "dev")
 
     def test_deploy_by_source(self):
         self._deploy_by_source()
-        self.openshift.openshift_exec.assert_any_call("new-app git@git.nexxera.com/myapp --name myapp", "dev")
+        self.openshift.openshift_exec.assert_any_call(
+            "new-app git@git.nexxera.com/myapp --name myapp ", "dev")
         self.shell_exec.execute_system.assert_any_call(
             "oc patch bc myapp -p '{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}' -n dev")
         self.openshift.openshift_exec.assert_any_call("start-build myapp --follow", "dev")
@@ -71,9 +74,14 @@ class OpenShiftTest(unittest.TestCase):
         self._deploy_by_source()
         self.assertEqual(0, self.openshift.create_route.call_count)
 
+    def test_should_have_env_vars_injected_into_container(self):
+        self._deploy_by_image({"MY_VAR": "Ola amigo", "DUMMY": "156546"})
+        self.openshift.openshift_exec.assert_any_call(
+            'new-app image1.dev.nexxera.com --name myapp MY_VAR="Ola amigo" DUMMY="156546" ', "dev")
+
     # helpers
-    def _deploy_by_image(self):
-        app = App("myapp", image="image1.dev.nexxera.com")
+    def _deploy_by_image(self, env_vars={}):
+        app = App("myapp", image="image1.dev.nexxera.com", env_vars=env_vars)
         env = Environment("openshift", "dev", "dev.com")
         self.openshift.deploy(app, env)
 
