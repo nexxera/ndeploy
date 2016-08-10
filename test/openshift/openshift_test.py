@@ -57,7 +57,7 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.openshift_exec.assert_any_call("new-app git@git.nexxera.com/myapp --name myapp", "dev")
         self.shell_exec.execute_system.assert_any_call(
             "oc patch bc myapp -p '{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}' -n dev")
-        self.openshift.openshift_exec.assert_any_call("start-build myapp", "dev")
+        self.openshift.openshift_exec.assert_any_call("start-build myapp --follow", "dev")
 
     def test_should_expose_service_if_does_not_exist(self):
         self._configure_route_exist("myapp", "dev", False)

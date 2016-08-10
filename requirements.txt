@@ -1,9 +1,5 @@
 requests
 injector
-# estamos usando a tag por conta desse bug -> https://github.com/dlitz/pycrypto/issues/99
-# quando promoverem a versão 2.7 para o pip poderemos usar o head
-git+https://github.com/dlitz/pycrypto.git@v2.7a1
 gitpython
 Jinja2
-timeout-decorator
 -e .
