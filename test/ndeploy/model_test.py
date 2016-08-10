@@ -41,3 +41,12 @@ class AssembleModelTest(unittest.TestCase):
             app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
 
         self.assertEqual(environment.__dict__, environment_expected.__dict__)
+
+    def test_create_empty_app(self):
+        app = App("name")
+        self.assertEquals("name", app.name)
+        self.assertEquals("", app.deploy_name)
+        self.assertEquals("", app.image)
+        self.assertEquals("", app.repository)
+        self.assertEquals({}, app.env_vars)
+

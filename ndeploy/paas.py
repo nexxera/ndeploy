@@ -6,7 +6,9 @@ import inspect
 import os
 import pkgutil
 from abc import abstractmethod
-from .env_var_resolver import EnvVarResolver
+from ndeploy.env_var_resolver import EnvVarResolver
+from ndeploy.shell_exec import ShellExec
+
 
 """
 Services que são carregados para que possam ser invocado no processo de deploy.
@@ -28,7 +30,6 @@ def service(name):
     return wrap
 
 
-
 class AbstractPaas:
     """
     Classe abstrata que define o que um PaaS precisa ter implementado para possibilitar o deploy de aplicações.
@@ -38,6 +39,7 @@ class AbstractPaas:
 
     def __init__(self):
         self.env_resolver = EnvVarResolver()
+        self.shell_exec = None
 
     @abstractmethod
     def deploy_by_git_push(self, app, env):
@@ -89,6 +91,7 @@ class AbstractPaas:
         Returns:
 
         """
+        assert self.shell_exec # shell_exec should exist at this point
 
         print("Selected PaaS: %s" % environment.type)
         app.env_vars = self._resolve_env_vars(app.env_vars)
@@ -109,6 +112,10 @@ class AbstractPaas:
 
         """
         return self.env_resolver.resolve_vars(env_vars, self, services)
+
+    def set_shell_exec(self, shell_exec):
+        self.shell_exec = shell_exec
+
 
 
 class PaasRepository:
@@ -133,14 +140,16 @@ class PaasRepository:
         Returns: dicionário com o nome/instancia das PaaS implementadas.
         """
 
-        #Avaliar posteriormente a possibilidade de usuário poder incluir novos módulos.
-        avaliable_paas_paths = ["supported_paas"]
+        # avaliar posteriormente a possibilidade de usuário poder incluir novos módulos.
+        available_paas_paths = ["supported_paas"]
 
         _available_paas = {}
-        for finder_module, name, _ in pkgutil.iter_modules(avaliable_paas_paths):
+        for finder_module, name, _ in pkgutil.iter_modules(available_paas_paths):
             module = importlib.import_module('%s.%s' % (finder_module.path, name))
-            for name, cls in inspect.getmembers(module):
+            for _1, cls in inspect.getmembers(module):
                 if inspect.isclass(cls) and issubclass(cls, AbstractPaas) and cls.__type__:
-                    _available_paas[cls.__type__] = cls()
+                    new_paas = cls()
+                    new_paas.set_shell_exec(ShellExec())
+                    _available_paas[cls.__type__] = new_paas
         return _available_paas
 
