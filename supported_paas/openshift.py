@@ -227,7 +227,8 @@ class OpenshiftPaas(AbstractPaas):
         Returns:
             True if exists, False otherwise
         """
-        return not self.shell_exec.program_return_error("oc get project " + project)
+        return not self.oc_return_error("get project {project}"
+                                        .format(project=project), "")
 
     def secret_exist(self, secret, project):
         """
@@ -240,8 +241,8 @@ class OpenshiftPaas(AbstractPaas):
         Returns:
             True if exists, False otherwise
         """
-        return not self.shell_exec.program_return_error("oc get secret {secret_name} -n {project}"
-                                                        .format(secret_name=secret, project=project))
+        return not self.oc_return_error("get secret {secret_name}"
+                                        .format(secret_name=secret), project)
 
     def route_exist(self, route, project):
         """
@@ -254,10 +255,10 @@ class OpenshiftPaas(AbstractPaas):
         Returns:
             True if exists, False otherwise
         """
-        return not self.shell_exec.program_return_error("oc get routes {route} -n {project}"
-                                                        .format(route=route, project=project))
+        return not self.oc_return_error("get routes {route}"
+                                        .format(route=route), project)
 
-    def openshift_exec(self, openshift_cmd, project_name):
+    def openshift_exec(self, oc_cmd, project_name):
         """
         Exec a command with oc client.
         If project_name != '' the command will have the project option at the end.
@@ -271,12 +272,29 @@ class OpenshiftPaas(AbstractPaas):
             will execute > oc get routes
 
         Args:
-            openshift_cmd: oc command to execute
+            oc_cmd: oc command to execute
             project_name: the project where the command will be executed
+
+        Returns:
+            tuple (err, out) containing response from ShellExec.execute_program
+
         """
-        self.shell_exec.execute_program("oc {cmd} -n {project}"
-                                        .format(cmd=openshift_cmd,
-                                                project=project_name if project_name != "" else ""))
+        return self.shell_exec.execute_program("oc {cmd} -n {project}"
+                                               .format(cmd=oc_cmd,
+                                                       project=project_name if project_name != "" else ""))
+
+    def oc_return_error(self, cmd, project_name):
+        """
+        Executes a oc command and verifies if execution returned error
+        Args:
+            cmd: oc command
+            project_name: the project where the command will be executed or '' if
+
+        Returns:
+            err: err != None if returned error
+        """
+        err, out = self.openshift_exec(cmd, project_name)
+        return err
 
     def is_logged(self):
         """

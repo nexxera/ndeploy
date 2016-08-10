@@ -96,5 +96,5 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.route_exist = MagicMock(side_effect=lambda r, p: exist if p == project and r == route else False)
 
     def _configure_openshift_exec(self):
-        self.openshift.openshift_exec = MagicMock()
+        self.openshift.openshift_exec = MagicMock(return_value=(None, ""))
 
