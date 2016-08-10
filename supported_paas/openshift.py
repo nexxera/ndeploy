@@ -95,7 +95,7 @@ class OpenshiftPaas(AbstractPaas):
             "'{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}'"
             " -n %s" % (app.name, project))
 
-        self.openshift_exec("start-build {app_name}".format(app_name=app.name), project)
+        self.openshift_exec("start-build {app_name} --follow".format(app_name=app.name), project)
 
     def load_service(self, name, resource):
         if name == 'postgres':
@@ -279,9 +279,10 @@ class OpenshiftPaas(AbstractPaas):
             tuple (err, out) containing response from ShellExec.execute_program
 
         """
-        return self.shell_exec.execute_program("oc {cmd} -n {project}"
+        return self.shell_exec.execute_program("oc {cmd} {project}"
                                                .format(cmd=oc_cmd,
-                                                       project=project_name if project_name != "" else ""))
+                                                       project="-n " + project_name if project_name != "" else ""))
+
 
     def oc_return_error(self, cmd, project_name):
         """
