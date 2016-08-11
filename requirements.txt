@@ -1,3 +1,4 @@
+--process-dependency-links
 requests
 injector
 gitpython

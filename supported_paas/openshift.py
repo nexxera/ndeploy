@@ -333,7 +333,7 @@ class OpenshiftPaas(AbstractPaas):
         return "postgres://user:senha@localhost:5432/%s" % resource
 
     def prepare_env_vars(self, env_vars):
-        env_vars_as_str = ''.join('{}="{}" '.format(k, v) for k, v in env_vars.items())
+        env_vars_as_str = ' '.join('{}="{}"'.format(k, v) for k, v in env_vars.items())
         return env_vars_as_str
 
     def get_openshift_area_name(self, env):

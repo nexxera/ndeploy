@@ -77,7 +77,7 @@ class OpenShiftTest(unittest.TestCase):
     def test_should_have_env_vars_injected_into_container(self):
         self._deploy_by_image({"MY_VAR": "Ola amigo", "DUMMY": "156546"})
         self.openshift.openshift_exec.assert_any_call(
-            'new-app image1.dev.nexxera.com --name myapp MY_VAR="Ola amigo" DUMMY="156546" ', "dev")
+            'new-app image1.dev.nexxera.com --name myapp MY_VAR="Ola amigo" DUMMY="156546"', "dev")
 
     # helpers
     def _deploy_by_image(self, env_vars={}):
