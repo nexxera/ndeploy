@@ -72,9 +72,13 @@ class OpenshiftPaas(AbstractPaas):
 
         project = self.get_openshift_area_name(env)
         self.openshift_exec("new-app {image_url} --name {app_name}"
-                            .format(image_url=app.image, app_name=app.name), project)
-        self.openshift_exec("deploy {app_name} --latest"
-                            .format(app_name=app.name), project)
+                            .format(image_url=app.image,
+                                    app_name=app.name), project)
+
+        # this triggers another deployment
+        self.openshift_exec("env dc/{app_name} {env_vars}"
+                            .format(app_name=app.name,
+                                    env_vars=self.prepare_env_vars(app.env_vars)), project)
 
     def create_app_by_source(self, app, env):
         """
@@ -88,7 +92,8 @@ class OpenshiftPaas(AbstractPaas):
 
         project = self.get_openshift_area_name(env)
         self.openshift_exec("new-app {source_repo} --name {app_name}"
-                            .format(source_repo=app.repository, app_name=app.name), project)
+                            .format(source_repo=app.repository,
+                                    app_name=app.name), project)
 
         self.shell_exec.execute_system(
             "oc patch bc %s -p "
@@ -96,6 +101,9 @@ class OpenshiftPaas(AbstractPaas):
             " -n %s" % (app.name, project))
 
         self.openshift_exec("start-build {app_name} --follow".format(app_name=app.name), project)
+        self.openshift_exec("env dc/{app_name} {env_vars}"
+                            .format(app_name=app.name,
+                                    env_vars=self.prepare_env_vars(app.env_vars)), project)
 
     def load_service(self, name, resource):
         if name == 'postgres':
@@ -201,7 +209,8 @@ class OpenshiftPaas(AbstractPaas):
         """
         # temos que executar com os.system por causa do parâmatro ssh-privatekey.
         # Por algum motivo não funciona com subprocess
-        self.shell_exec.execute_system("oc secrets new scmsecret ssh-privatekey=$HOME/.ssh/id_rsa -n {}".format(project))
+        self.shell_exec.execute_system("oc secrets new scmsecret "
+                                       "ssh-privatekey=$HOME/.ssh/id_rsa -n {}".format(project))
         self.openshift_exec("secrets add serviceaccount/builder secrets/scmsecret", project)
 
     def create_secret_if_does_not_exist(self, project):
@@ -283,7 +292,6 @@ class OpenshiftPaas(AbstractPaas):
                                                .format(cmd=oc_cmd,
                                                        project="-n " + project_name if project_name != "" else ""))
 
-
     def oc_return_error(self, cmd, project_name):
         """
         Executes a oc command and verifies if execution returned error
@@ -324,12 +332,28 @@ class OpenshiftPaas(AbstractPaas):
         ip = socket.gethostbyname(env.deploy_host)
         self.shell_exec.execute_program("oc login https://%s:8443" % ip)
 
-    @staticmethod
-    def _load_postgres(resource):
+    def _load_postgres(self, resource):
         return "postgres://user:senha@localhost:5432/%s" % resource
 
-    @staticmethod
-    def get_openshift_area_name(env):
+    def prepare_env_vars(self, env_vars):
+        """
+        Format the env_vars dict as a string with the format below:
+
+            self.prepare_env_vars({ "ENV1": "value1", "ENV2": "value2" })
+                -> ENV1=value1 ENV2=value2
+
+        Args:
+            env_vars (dict): dict containing environment keys and values
+
+        Returns:
+            str containing the formatted values
+
+        """
+        env_vars_as_str = ' '.join('{}="{}"'.format(k, v) \
+                                   for k, v in sorted(env_vars.items()))
+        return env_vars_as_str
+
+    def get_openshift_area_name(self, env):
         """
         Returns the current openshift project name.
         By now the project name will be the env.name. In sgslebs/ndeploy the project
