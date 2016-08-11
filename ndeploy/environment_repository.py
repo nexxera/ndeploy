@@ -7,10 +7,11 @@ Posteriormente pode-se implementar a atualização, mas não é algo tão necess
 import json
 import os
 import sys
-import base64
+# import base64
 from ndeploy.model import Environment
-from os import chmod
-from Crypto.PublicKey import RSA
+# from os import chmod
+# from Crypto.PublicKey import RSA
+from ndeploy.shell_exec import ShellExec
 
 
 class EnvironmentRepository:
@@ -77,15 +78,17 @@ class EnvironmentRepository:
 
     def _generate_rsa_for_env(self, env):
         rsa_file_path = self.get_env_private_key_path(env)
+        ShellExec.execute_program("ssh-keygen -f {path} -t rsa -N '' -q"
+                                  .format(path=rsa_file_path), True)
 
-        key = RSA.generate(2048)
-        with open(rsa_file_path, 'wb') as content_file:
-            chmod(rsa_file_path, 0o600)
-            content_file.write(key.exportKey('PEM'))
-        pubkey = key.publickey()
-        with open(self.get_env_public_key_path(env), 'wb') as content_file:
-            public = pubkey.exportKey('OpenSSH')
-            content_file.write(public)
+        # key = RSA.generate(2048)
+        # with open(rsa_file_path, 'wb') as content_file:
+        #     chmod(rsa_file_path, 0o600)
+        #     content_file.write(key.exportKey('PEM'))
+        # pubkey = key.publickey()
+        # with open(self.get_env_public_key_path(env), 'wb') as content_file:
+        #     public = pubkey.exportKey('OpenSSH')
+        #     content_file.write(public)
 
     def remove_environment(self, name):
         """

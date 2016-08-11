@@ -7,14 +7,15 @@ import os
 class ShellExec:
 
     @staticmethod
-    def execute_program(cmd):
+    def execute_program(cmd, silent=False):
         args = shlex.split(cmd)
         p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         err = err.decode().strip()
         out = out.decode().strip()
-        print(err)
-        print(out)
+        if not silent:
+            print(err)
+            print(out)
         return err, out
 
     @staticmethod
