@@ -71,13 +71,14 @@ class OpenshiftPaas(AbstractPaas):
         print("Deploying app by image: %s, image: %s" % (app.name, app.image))
 
         project = self.get_openshift_area_name(env)
-        self.openshift_exec("new-app {image_url} --name {app_name} {env_vars}"
+        self.openshift_exec("new-app {image_url} --name {app_name}"
                             .format(image_url=app.image,
-                                    app_name=app.name,
-                                    env_vars=self.prepare_env_vars(app.env_vars)), project)
+                                    app_name=app.name), project)
 
-        self.openshift_exec("deploy {app_name} --latest"
-                            .format(app_name=app.name), project)
+        # this triggers another deployment
+        self.openshift_exec("env dc/{app_name} {env_vars}"
+                            .format(app_name=app.name,
+                                    env_vars=self.prepare_env_vars(app.env_vars)), project)
 
     def create_app_by_source(self, app, env):
         """
@@ -90,10 +91,9 @@ class OpenshiftPaas(AbstractPaas):
         print("Deploying app by source: %s, group: repository: %s" % (app.name, app.repository))
 
         project = self.get_openshift_area_name(env)
-        self.openshift_exec("new-app {source_repo} --name {app_name} {env_vars}"
+        self.openshift_exec("new-app {source_repo} --name {app_name}"
                             .format(source_repo=app.repository,
-                                    app_name=app.name,
-                                    env_vars=self.prepare_env_vars(app.env_vars)), project)
+                                    app_name=app.name), project)
 
         self.shell_exec.execute_system(
             "oc patch bc %s -p "
@@ -101,6 +101,9 @@ class OpenshiftPaas(AbstractPaas):
             " -n %s" % (app.name, project))
 
         self.openshift_exec("start-build {app_name} --follow".format(app_name=app.name), project)
+        self.openshift_exec("env dc/{app_name} {env_vars}"
+                            .format(app_name=app.name,
+                                    env_vars=self.prepare_env_vars(app.env_vars)), project)
 
     def load_service(self, name, resource):
         if name == 'postgres':
@@ -333,7 +336,21 @@ class OpenshiftPaas(AbstractPaas):
         return "postgres://user:senha@localhost:5432/%s" % resource
 
     def prepare_env_vars(self, env_vars):
-        env_vars_as_str = ' '.join('{}="{}"'.format(k, v) for k, v in env_vars.items())
+        """
+        Format the env_vars dict as a string with the format below:
+
+            self.prepare_env_vars({ "ENV1": "value1", "ENV2": "value2" })
+                -> ENV1=value1 ENV2=value2
+
+        Args:
+            env_vars (dict): dict containing environment keys and values
+
+        Returns:
+            str containing the formatted values
+
+        """
+        env_vars_as_str = ' '.join('{}="{}"'.format(k, v) \
+                                   for k, v in sorted(env_vars.items()))
         return env_vars_as_str
 
     def get_openshift_area_name(self, env):
