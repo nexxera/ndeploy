@@ -5,6 +5,8 @@ import shutil
 
 from ndeploy.environment_repository import EnvironmentRepository
 from ndeploy.model import Environment
+from ndeploy.exception import EnvironmentAlreadyExistsError
+from unittest.mock import MagicMock
 
 
 class EnvironmentTest(unittest.TestCase):
@@ -18,7 +20,8 @@ class EnvironmentTest(unittest.TestCase):
         if os.path.isdir(self.ndeploy_dir):
             shutil.rmtree(self.ndeploy_dir)
 
-        self.env_repo = EnvironmentRepository(self.ndeploy_dir)
+        self.shell_exec = MagicMock()
+        self.env_repo = EnvironmentRepository(self.ndeploy_dir, self.shell_exec)
 
     def test_add_environments(self):
 
@@ -38,12 +41,16 @@ class EnvironmentTest(unittest.TestCase):
     def test_add_environment_should_create_rsa_key_with_same_name_of_env(self):
         self._add_integrated_dev_environment()
 
-        self.assertTrue(os.path.exists(os.path.join(self.env_repo.get_ndeploy_dir(), ".ssh", "id_rsa_integrated-dev")))
-        self.assertTrue(os.path.exists(os.path.join(self.env_repo.get_ndeploy_dir(), ".ssh", "id_rsa_integrated-dev.pub")))
+        self.shell_exec.execute_program("ssh-keygen -f {} -t rsa -N '' -q"
+                                        .format(os.path.join(
+                                            self.env_repo.get_ndeploy_dir(),
+                                            ".ssh",
+                                            "id_rsa_integrated-dev")))
 
     def test_list_environments(self):
         test_ndeploy_dir = os.path.join(os.path.dirname(__file__), '../resources')
-        environments = EnvironmentRepository(test_ndeploy_dir).list_environments()
+        environments = EnvironmentRepository(test_ndeploy_dir, self.shell_exec)\
+            .list_environments()
 
         self.assertEqual(len(environments), 2)
 
@@ -60,10 +67,18 @@ class EnvironmentTest(unittest.TestCase):
 
     def test_load_enviroment(self):
         test_ndeploy_dir = os.path.join(os.path.dirname(__file__), '../resources')
-        environment = EnvironmentRepository(test_ndeploy_dir).load_environment("dev")
+        environment = EnvironmentRepository(test_ndeploy_dir, self.shell_exec)\
+            .load_environment("dev")
 
         self.assertEqual(environment.type, "dokku")
         self.assertEqual(environment.deploy_host, "integrated-dev.nexxera.com")
+
+    def test_cannot_add_two_environments_with_same_name(self):
+        self._add_integrated_dev_environment()
+        with self.assertRaises(EnvironmentAlreadyExistsError):
+            self._add_integrated_dev_environment()
+
+    # helpers
 
     def _add_integrated_dev_environment(self):
         self._add_environment(Environment(

@@ -24,4 +24,18 @@ class AppConfigFileCloneError(NDeployError):
         self.local_file = local_file
 
     def __str__(self):
-        return "could not get app config file from {}. Tried to save in {}".format(self.repo, self.local_file)
+        return "Could not get app config file from {}. Tried to save in {}"\
+            .format(self.repo, self.local_file)
+
+
+class EnvironmentAlreadyExistsError(NDeployError):
+    """
+    Excpetion thrown when user tries to add two environment with same name
+    """
+    def __init__(self, env_name):
+        self.env_name = env_name
+
+    def __str__(self):
+        return "Environment with name {} already exists"\
+            .format(self.env_name)
+

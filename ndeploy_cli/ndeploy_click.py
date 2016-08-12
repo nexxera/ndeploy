@@ -5,10 +5,11 @@ from ndeploy import core
 from ndeploy import environment_repository
 from ndeploy import deployer
 from ndeploy import paas
+from ndeploy.shell_exec import ShellExec
 
 # dependencies resolution
 NDEPLOY_HOME = os.environ['HOME']+"/.ndeploy"
-env_repository = environment_repository.EnvironmentRepository(NDEPLOY_HOME)
+env_repository = environment_repository.EnvironmentRepository(NDEPLOY_HOME, ShellExec())
 paas_repository = paas.PaasRepository()
 deployer = deployer.Deployer(paas_repository, env_repository)
 ndeploy_core = core.NDeployCore(env_repository, deployer)
