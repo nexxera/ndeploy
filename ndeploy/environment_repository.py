@@ -7,7 +7,6 @@ Posteriormente pode-se implementar a atualização, mas não é algo tão necess
 import json
 import os
 from ndeploy.model import Environment
-from ndeploy.shell_exec import ShellExec
 from ndeploy.exception import EnvironmentAlreadyExistsError
 
 
@@ -16,34 +15,18 @@ class EnvironmentRepository:
     Manages the environments inside ndeploy
 
     """
-    def __init__(self, ndeploy_dir):
+    def __init__(self, ndeploy_dir, shell_exec):
         self.ndeploy_dir = ndeploy_dir
         self.environments = self._load_environments_dict()
         self._configure_dirs()
-
-    def get_ndeploy_dir(self):
-        """
-        Retorna o path do diretório de configurações do ndeploy
-        Returns:
-            Caminho para o diretório de configurações do ndeploy
-        """
-        return self.ndeploy_dir
-
-    def get_environments_file(self):
-        """
-        Retorna o caminho do arquivo json de environments do ndeploy
-        Returns:
-            Caminho para o 'environments.json', onde ficam persistidos os environments
-        """
-        return os.path.join(self.get_ndeploy_dir(), "environments.json")
+        self.shell_exec = shell_exec
 
     def add_environment(self, environment):
         """
-        Adiciona um novo Environment e salva o arquivo de environments
-        Args:
-            environment: Environment a ser salvo
+        Adds a new environment in the repository and persists to file
 
-        Returns:
+        Args:
+            environment: Environment object to be saved
 
         """
         if self.has_environment(environment.name):
@@ -102,8 +85,8 @@ class EnvironmentRepository:
 
         """
         rsa_file_path = self.get_env_private_key_path(env_name)
-        ShellExec.execute_program("ssh-keygen -f {path} -t rsa -N '' -q"
-                                  .format(path=rsa_file_path), True)
+        self.shell_exec.execute_program("ssh-keygen -f {path} -t rsa -N '' -q"
+                                        .format(path=rsa_file_path), True)
 
     def remove_environment(self, env_name):
         """
@@ -194,3 +177,20 @@ class EnvironmentRepository:
         os.makedirs(self.ndeploy_dir, exist_ok=True)
         ssh_path = os.path.join(self.ndeploy_dir, ".ssh")
         os.makedirs(ssh_path, exist_ok=True)
+
+    def get_ndeploy_dir(self):
+        """
+        Returns the ndeploy home directory
+        Returns:
+            str containing ndeploy home dir
+        """
+        return self.ndeploy_dir
+
+    def get_environments_file(self):
+        """
+        Returns the environments json file
+        Returns:
+            str containing full path of environments.json file
+        """
+        return os.path.join(self.get_ndeploy_dir(), "environments.json")
+
