@@ -11,6 +11,16 @@ class OpenShiftNotLoggedError(NDeployError):
                "You have to execute 'oc login' before executing ndeploy."
 
 
+class OpenShiftNameTooLongError(NDeployError):
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return "The app deploy name {} is too long for openshift handle.\n" \
+               "Use a name shorter than 24 characteres in App deploy_name field."\
+            .format(self.name)
+
+
 class OpenshiftPaas(AbstractPaas):
     """
     Implementação dos métodos para deploy no openshift.
@@ -54,10 +64,15 @@ class OpenshiftPaas(AbstractPaas):
             create_app_callback: function that makes the deploy
                             signature: fn(app, env)
         """
+        self.validate_deploy_name(app)
         self.handle_login()
         self.configure_project(env)
         create_app_callback(app, env)
         self.expose_service(app, env)
+
+    def validate_deploy_name(self, app):
+        if len(app.deploy_name) > 24:
+            raise OpenShiftNameTooLongError(app.deploy_name)
 
     def create_app_by_image(self, app, env):
         """
@@ -68,16 +83,16 @@ class OpenshiftPaas(AbstractPaas):
             env: Environment object
         """
         print(app.env_vars)
-        print("Deploying app by image: %s, image: %s" % (app.name, app.image))
+        print("Deploying app by image: %s, image: %s" % (app.deploy_name, app.image))
 
         project = self.get_openshift_area_name(env)
         self.openshift_exec("new-app {image_url} --name {app_name}"
                             .format(image_url=app.image,
-                                    app_name=app.name), project)
+                                    app_name=app.deploy_name), project)
 
         # this triggers another deployment
         self.openshift_exec("env dc/{app_name} {env_vars}"
-                            .format(app_name=app.name,
+                            .format(app_name=app.deploy_name,
                                     env_vars=self.prepare_env_vars(app.env_vars)), project)
 
     def create_app_by_source(self, app, env):
@@ -93,16 +108,16 @@ class OpenshiftPaas(AbstractPaas):
         project = self.get_openshift_area_name(env)
         self.openshift_exec("new-app {source_repo} --name {app_name}"
                             .format(source_repo=app.repository,
-                                    app_name=app.name), project)
+                                    app_name=app.deploy_name), project)
 
         self.shell_exec.execute_system(
             "oc patch bc %s -p "
             "'{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}'"
-            " -n %s" % (app.name, project))
+            " -n %s" % (app.deploy_name, project))
 
-        self.openshift_exec("start-build {app_name} --follow".format(app_name=app.name), project)
+        self.openshift_exec("start-build {app_name} --follow".format(app_name=app.deploy_name), project)
         self.openshift_exec("env dc/{app_name} {env_vars}"
-                            .format(app_name=app.name,
+                            .format(app_name=app.deploy_name,
                                     env_vars=self.prepare_env_vars(app.env_vars)), project)
 
     def load_service(self, name, resource):
@@ -131,7 +146,7 @@ class OpenshiftPaas(AbstractPaas):
             app (App): App object
             env (Environment): Environment object
         """
-        route_name = app.name
+        route_name = app.deploy_name
         project = self.get_openshift_area_name(env)
 
         if not self.route_exist(route_name, project):
@@ -148,9 +163,9 @@ class OpenshiftPaas(AbstractPaas):
             app (App): app object
             env (Environment): environment
         """
-        cmd = "expose service/%s --hostname=%s" % (app.name,
+        cmd = "expose service/%s --hostname=%s" % (app.deploy_name,
                                                    self.get_openshift_app_host(app, env))
-        print("...Creating app route for %s : %s" % (app.name, cmd))
+        print("...Creating app route for %s : %s" % (app.deploy_name, cmd))
         self.openshift_exec(cmd, self.get_openshift_area_name(env))
 
     def get_openshift_app_host(self, app, env):
@@ -163,7 +178,7 @@ class OpenshiftPaas(AbstractPaas):
 
         Return the host url of the app
         """
-        return "%s-%s.%s" % (app.name, self.get_openshift_area_name(env), env.deploy_host)
+        return "%s-%s.%s" % (app.deploy_name, self.get_openshift_area_name(env), env.deploy_host)
 
     def configure_project(self, env):
         """
