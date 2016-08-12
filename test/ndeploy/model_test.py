@@ -45,8 +45,12 @@ class AssembleModelTest(unittest.TestCase):
     def test_create_empty_app(self):
         app = App("name")
         self.assertEquals("name", app.name)
-        self.assertEquals("", app.deploy_name)
+        self.assertEquals("name", app.deploy_name)
         self.assertEquals("", app.image)
         self.assertEquals("", app.repository)
         self.assertEquals({}, app.env_vars)
+
+    def test_app_without_deploy_name_use_name(self):
+        app = App("name")
+        self.assertEqual("name", app.deploy_name)
 

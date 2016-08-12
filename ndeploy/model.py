@@ -48,7 +48,7 @@ class App:
                     onde app indica que um link com outra app deve ser usado, other-app é o nome da app que deve ser verificado a url para composição do link.
         """
         self.name = name
-        self.deploy_name = args["deploy_name"] if "deploy_name" in args else ""
+        self.deploy_name = args["deploy_name"] if "deploy_name" in args else self.name
         self.repository = args["repository"] if "repository" in args else ""
         self.image = args["image"] if "image" in args else ""
         self.env_vars = args["env_vars"] if "env_vars" in args else {}

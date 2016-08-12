@@ -1,5 +1,6 @@
 import unittest
-from supported_paas.openshift import OpenshiftPaas, OpenShiftNotLoggedError
+from supported_paas.openshift import OpenshiftPaas, \
+    OpenShiftNotLoggedError, OpenShiftNameTooLongError
 from ndeploy.model import App, Environment
 from unittest.mock import MagicMock
 
@@ -87,6 +88,10 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.openshift_exec.assert_any_call(
             "env dc/myapp DUMMY=\"156546\" MY_VAR=\"Ola amigo\"", "dev")
 
+    def test_app_with_long_deploy_name_should_raise_exception(self):
+        with self.assertRaises(OpenShiftNameTooLongError):
+            self._deploy(App("myapp", deploy_name="pneumoultramicroscopicossilicovulcanoconiótico",
+                         image="image", env_vars={}))
     # helpers
 
     def _deploy_by_image(self, env_vars={}):
