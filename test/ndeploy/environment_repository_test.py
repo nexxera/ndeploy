@@ -5,6 +5,8 @@ import shutil
 
 from ndeploy.environment_repository import EnvironmentRepository
 from ndeploy.model import Environment
+from ndeploy.exception import EnvironmentAlreadyExistsError
+
 
 
 class EnvironmentTest(unittest.TestCase):
@@ -64,6 +66,13 @@ class EnvironmentTest(unittest.TestCase):
 
         self.assertEqual(environment.type, "dokku")
         self.assertEqual(environment.deploy_host, "integrated-dev.nexxera.com")
+
+    def test_cannot_add_two_environments_with_same_name(self):
+        self._add_integrated_dev_environment()
+        with self.assertRaises(EnvironmentAlreadyExistsError):
+            self._add_integrated_dev_environment()
+
+    # helpers
 
     def _add_integrated_dev_environment(self):
         self._add_environment(Environment(

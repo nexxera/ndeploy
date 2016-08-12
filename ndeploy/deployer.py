@@ -17,13 +17,14 @@ class Deployer:
 
     def deploy(self, file=None, group=None, name=None, environment=None):
         """
-        Método responsável por tratar os parâmetros passados pelo usuário e tentar fazer o deploy da aplicação.
+        Método responsável por tratar os parâmetros passados pelo
+        usuário e tentar fazer o deploy da aplicação.
 
-        :param file:
-        :param group:
-        :param name:
-        :param environment:
-        :return:
+        Args:
+            file (str): path do arquivo json de configuração da app (optional)
+            group (str): grupo da aplicação (optional, caso não seja passado o file)
+            name (str): nome da aplicação (optional, caso não seja passado o file)
+            environment (str): nome do environment onde será feito o deploy (optional)
         """
         app_data = None
 
