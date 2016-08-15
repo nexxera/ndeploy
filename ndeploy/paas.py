@@ -146,7 +146,6 @@ class PaasRepository:
 
         _available_paas = {}
         for finder_module, name, _ in pkgutil.iter_modules([supported_paas_path]):
-            print("imported: " + name)
             module = importlib.import_module('%s.%s' % ("supported_paas", name))
             for _1, cls in inspect.getmembers(module):
                 if inspect.isclass(cls) and issubclass(cls, AbstractPaas) and cls.__type__:
