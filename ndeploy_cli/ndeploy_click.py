@@ -4,14 +4,14 @@ import os
 from ndeploy import core
 from ndeploy import environment_repository
 from ndeploy import deployer
-from ndeploy import paas
+from ndeploy import provider
 from ndeploy.shell_exec import ShellExec
 
 # dependencies resolution
 NDEPLOY_HOME = os.environ['HOME']+"/.ndeploy"
 env_repository = environment_repository.EnvironmentRepository(NDEPLOY_HOME, ShellExec())
-paas_repository = paas.PaasRepository()
-deployer = deployer.Deployer(paas_repository, env_repository)
+provider_repository = provider.ProviderRepository()
+deployer = deployer.Deployer(provider_repository, env_repository)
 ndeploy_core = core.NDeployCore(env_repository, deployer)
 
 
@@ -23,7 +23,8 @@ def ndeploy():
 @click.option('-f','--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
 @click.option('-h','--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
 @click.option('-n','--name', prompt='Environment name', help='Environment name.')
-@click.option('-t', '--type', prompt='PaaS type', help="PaaS type.", type=click.Choice(paas_repository.get_available_paas().keys()))
+@click.option('-t', '--type', prompt='Provider type', help="Provider type.",
+              type=click.Choice(provider_repository.get_available_providers().keys()))
 @ndeploy.command()
 def addenv(**kwargs):
     ndeploy_core.add_environment(name=kwargs['name'],
@@ -38,10 +39,11 @@ def delenv(**kwargs):
     ndeploy_core.remove_environment(kwargs['name'])
 
 
-@click.option('-f','--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
-@click.option('-h','--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
-@click.option('-t', '--type', prompt='PaaS type', help="PaaS type.", type=click.Choice(paas_repository.get_available_paas().keys()))
-@click.option('-n','--name', prompt='Environment name', help='Environment name.')
+@click.option('-f', '--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
+@click.option('-h', '--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
+@click.option('-t', '--type', prompt='Provider type', help="Provider type.",
+              type=click.Choice(provider_repository.get_available_providers().keys()))
+@click.option('-n', '--name', prompt='Environment name', help='Environment name.')
 @ndeploy.command()
 def updatenv(**kwargs):
     ndeploy_core.update_environment(name=kwargs['name'],

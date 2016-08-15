@@ -3,7 +3,6 @@ Módulo com implementações referentes ao que uma PaaS precisa ter mapeada para
 """
 import importlib
 import inspect
-import os
 import pkgutil
 from abc import abstractmethod
 from ndeploy.env_var_resolver import EnvVarResolver
@@ -15,6 +14,7 @@ Services que são carregados para que possam ser invocado no processo de deploy.
 Todo método anotado com @service é carregado neste dicionário com o nome informado no decorador.
  """
 services = {}
+
 
 def service(name):
     """
@@ -30,9 +30,9 @@ def service(name):
     return wrap
 
 
-class AbstractPaas:
+class AbstractProvider:
     """
-    Classe abstrata que define o que um PaaS precisa ter implementado para possibilitar o deploy de aplicações.
+    Classe abstrata que define o que um provider precisa ter implementado para possibilitar o deploy de aplicações.
     """
 
     __type__ = None
@@ -54,7 +54,6 @@ class AbstractPaas:
         """
         pass
 
-
     @abstractmethod
     def deploy_by_image(self, app, env):
         """
@@ -67,7 +66,6 @@ class AbstractPaas:
 
         """
         pass
-
 
     @abstractmethod
     def app_url(self, resource):
@@ -117,40 +115,39 @@ class AbstractPaas:
         self.shell_exec = shell_exec
 
 
-
-class PaasRepository:
+class ProviderRepository:
     """
-    Repositório de AbstractPaas.
-    Carrega módulos definidos no diretório supported_paas que implementem AbstractPaas
+    Repositório de AbstractProvider.
+    Carrega módulos definidos no diretório supported_providers que implementem AbstractProvider
     """
 
     def __init__(self):
-        self.available_paas = PaasRepository.load_available_paas()
+        self.available_providers = ProviderRepository.load_available_providers()
 
-    def get_available_paas(self):
-        return self.available_paas
+    def get_available_providers(self):
+        return self.available_providers
 
-    def get_paas_for(self, paas_type):
-        return self.available_paas[paas_type]
+    def get_provider_for(self, provider_type):
+        return self.available_providers[provider_type]
 
     @staticmethod
-    def load_available_paas():
+    def load_available_providers():
         """
-        Carrega as implementações de PaaS
+        Carrega as implementações de AbstractProvider
         Returns: dicionário com o nome/instancia das PaaS implementadas.
         """
 
         # avaliar posteriormente a possibilidade de usuário poder incluir novos módulos.
-        import supported_paas
-        supported_paas_path = supported_paas.__path__[0]
+        import supported_providers
+        supported_providers_path = supported_providers.__path__[0]
 
-        _available_paas = {}
-        for finder_module, name, _ in pkgutil.iter_modules([supported_paas_path]):
-            module = importlib.import_module('%s.%s' % ("supported_paas", name))
+        _available_providers = {}
+        for finder_module, name, _ in pkgutil.iter_modules([supported_providers_path]):
+            module = importlib.import_module('%s.%s' % ("supported_providers", name))
             for _1, cls in inspect.getmembers(module):
-                if inspect.isclass(cls) and issubclass(cls, AbstractPaas) and cls.__type__:
-                    new_paas = cls()
-                    new_paas.set_shell_exec(ShellExec())
-                    _available_paas[cls.__type__] = new_paas
-        return _available_paas
+                if inspect.isclass(cls) and issubclass(cls, AbstractProvider) and cls.__type__:
+                    new_provider = cls()
+                    new_provider.set_shell_exec(ShellExec())
+                    _available_providers[cls.__type__] = new_provider
+        return _available_providers
 

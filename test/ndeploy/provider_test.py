@@ -3,11 +3,11 @@ import os
 import unittest
 
 from ndeploy.model import App, Environment
-from ndeploy.paas import AbstractPaas, service
+from ndeploy.provider import AbstractProvider, service
 from unittest.mock import MagicMock
 
 
-class MockPaas(AbstractPaas):
+class MockProvider(AbstractProvider):
 
     def __init__(self):
         super().__init__()
@@ -44,7 +44,7 @@ class AssembleModelTest(unittest.TestCase):
         data = json.loads(json_data)
         app = App(**data)
 
-        mock_paas = MockPaas()
+        mock_paas = MockProvider()
         mock_paas.set_shell_exec(MagicMock())
         mock_paas.deploy(app, Environment(name='dev', deploy_host='localhost', type='mock'))
 

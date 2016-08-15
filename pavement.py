@@ -3,7 +3,7 @@ from pkg_resources import iter_entry_points
 
 setup(
     name='ndeploy',
-    packages=['ndeploy','supported_paas','ndeploy_cli'],
+    packages=['ndeploy','supported_providers','ndeploy_cli'],
     install_requires=["click", "timeout-decorator"],
     dependency_links=[],
     version='0.0.1',

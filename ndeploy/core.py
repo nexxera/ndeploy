@@ -63,7 +63,6 @@ class NDeployCore:
                                   app_deployment_file_url=app_deployment_file_url)
         self.environment_repository.update_environment(environment)
 
-
     def list_environments(self):
         """
         Carrega os Environments salvos.

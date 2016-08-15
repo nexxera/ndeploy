@@ -25,11 +25,11 @@ class EnvVarResolver:
 
     def __init__(self):
         self.services = {}
-        self.paas = None
+        self.provider = None
 
-    def resolve_vars(self, env_vars, paas, services):
+    def resolve_vars(self, env_vars, provider, services):
         self.services = services
-        self.paas = paas
+        self.provider = provider
 
         for key, value in env_vars.items():
             real_value = self._process_variable_value(value)
@@ -92,11 +92,11 @@ class EnvVarResolver:
         # quando é um service, usa os serviços mapeados apartir do decorador @service.
         name = parsed_var[1]
         resource = parsed_var[2] if len(parsed_var) == 3 else None
-        return self.services[name](self.paas, resource)
+        return self.services[name](self.provider, resource)
 
     def _resolve_app(self, parsed_var):
         assert len(parsed_var) == 2, "syntax error in app variable " + ":".join(parsed_var)
-        return self.paas.app_url(parsed_var[1])
+        return self.provider.app_url(parsed_var[1])
 
 
 
