@@ -1,5 +1,5 @@
 import os
-from ndeploy.paas import AbstractPaas
+from ndeploy.provider import AbstractProvider
 import socket
 from ndeploy.exception import NDeployError
 import timeout_decorator
@@ -21,7 +21,7 @@ class OpenShiftNameTooLongError(NDeployError):
             .format(self.name)
 
 
-class OpenshiftPaas(AbstractPaas):
+class OpenshiftProvider(AbstractProvider):
     """
     Implementação dos métodos para deploy no openshift.
     """

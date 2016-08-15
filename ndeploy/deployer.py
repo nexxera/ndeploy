@@ -8,11 +8,11 @@ from ndeploy.exception import InvalidArgumentError, AppConfigFileCloneError
 
 class Deployer:
     """
-    Classe responsável por resolver os parâmetros do deploy e chamar o paas para fazer o deploy
+    Classe responsável por resolver os parâmetros do deploy e chamar o provider para fazer o deploy
     """
 
-    def __init__(self, paas_repository, env_repository):
-        self.paas_repository = paas_repository
+    def __init__(self, provider_repository, env_repository):
+        self.provider_repository = provider_repository
         self.env_repository = env_repository
 
     def deploy(self, file=None, group=None, name=None, environment=None):
@@ -38,7 +38,7 @@ class Deployer:
         app = self._resolve_app(app_data, group, name, env)
         assert app is not None
 
-        self.paas_repository.get_paas_for(env.type).deploy(app, env)
+        self.provider_repository.get_provider_for(env.type).deploy(app, env)
 
     def _get_remote_conf(self, repo_url, relative_path, rsa_path):
 

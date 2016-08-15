@@ -1,5 +1,5 @@
 import unittest
-from supported_paas.openshift import OpenshiftPaas, \
+from supported_providers.openshift import OpenshiftProvider, \
     OpenShiftNotLoggedError, OpenShiftNameTooLongError
 from ndeploy.model import App, Environment
 from unittest.mock import MagicMock
@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 class OpenShiftTest(unittest.TestCase):
 
     def setUp(self):
-        self.openshift = OpenshiftPaas()
+        self.openshift = OpenshiftProvider()
         self.shell_exec = MagicMock()
         self.openshift.set_shell_exec(self.shell_exec)
         self._configure_is_logged(True)

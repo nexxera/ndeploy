@@ -1,9 +1,9 @@
 import pprint
 
-from ndeploy.paas import AbstractPaas, service
+from ndeploy.provider import AbstractProvider, service
 
 
-class DokkuPaas(AbstractPaas):
+class DokkuProvider(AbstractProvider):
     """
     Implementação dos métodos para deploy em PaaS Dokku.
     """

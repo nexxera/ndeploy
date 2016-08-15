@@ -11,12 +11,12 @@ from ndeploy.model import Environment
 class DeployerTest(unittest.TestCase):
 
     def setUp(self):
-        self.paas_repo = mock.MagicMock()
+        self.provider_repo = mock.MagicMock()
         self.env_repo = mock.MagicMock()
-        self.deployer = Deployer(self.paas_repo, self.env_repo)
+        self.deployer = Deployer(self.provider_repo, self.env_repo)
 
-        self.mocked_paas = mock.MagicMock()
-        self.paas_repo.get_paas_for.return_value = self.mocked_paas
+        self.mocked_provider = mock.MagicMock()
+        self.provider_repo.get_provider_for.return_value = self.mocked_provider
 
     def test_deploy_should_fail_if_no_environment_is_passed(self):
         with self.assertRaises(expected_exception=InvalidArgumentError):
@@ -61,11 +61,11 @@ class DeployerTest(unittest.TestCase):
 
     def _assert_deploy_call(self, expected_app_name, expected_app_deploy_name,
                             expected_env_name, expected_env_deploy_host, expected_env_type):
-        self.paas_repo.get_paas_for.assert_called_with(expected_env_type)
-        self.assertEqual(1, self.mocked_paas.deploy.call_count)
+        self.provider_repo.get_provider_for.assert_called_with(expected_env_type)
+        self.assertEqual(1, self.mocked_provider.deploy.call_count)
 
-        app_called = self.mocked_paas.deploy.call_args[0][0]
-        env_called = self.mocked_paas.deploy.call_args[0][1]
+        app_called = self.mocked_provider.deploy.call_args[0][0]
+        env_called = self.mocked_provider.deploy.call_args[0][1]
         self._assertApp(expected_app_name, expected_app_deploy_name, app_called)
         self._assertEnv(expected_env_name, expected_env_deploy_host, expected_env_type, env_called)
 
