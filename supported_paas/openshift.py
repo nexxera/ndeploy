@@ -163,10 +163,17 @@ class OpenshiftPaas(AbstractPaas):
             app (App): app object
             env (Environment): environment
         """
+        project = self.get_openshift_area_name(env)
         cmd = "expose service/%s --hostname=%s" % (app.deploy_name,
                                                    self.get_openshift_app_host(app, env))
         print("...Creating app route for %s : %s" % (app.deploy_name, cmd))
-        self.openshift_exec(cmd, self.get_openshift_area_name(env))
+        self.openshift_exec(cmd, project)
+
+        print("...Patching route to enable tls")
+        patch_cmd = """patch route %s -p '{"spec": {"tls": {"termination": "edge", "insecureEdgeTerminationPolicy": "Redirect"}}}'""" \
+                    % app.deploy_name
+        self.openshift_exec(patch_cmd, project)
+
 
     def get_openshift_app_host(self, app, env):
         """
