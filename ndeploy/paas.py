@@ -141,11 +141,13 @@ class PaasRepository:
         """
 
         # avaliar posteriormente a possibilidade de usuário poder incluir novos módulos.
-        available_paas_paths = ["supported_paas"]
+        import supported_paas
+        supported_paas_path = supported_paas.__path__[0]
 
         _available_paas = {}
-        for finder_module, name, _ in pkgutil.iter_modules(available_paas_paths):
-            module = importlib.import_module('%s.%s' % (finder_module.path, name))
+        for finder_module, name, _ in pkgutil.iter_modules([supported_paas_path]):
+            print("imported: " + name)
+            module = importlib.import_module('%s.%s' % ("supported_paas", name))
             for _1, cls in inspect.getmembers(module):
                 if inspect.isclass(cls) and issubclass(cls, AbstractPaas) and cls.__type__:
                     new_paas = cls()
