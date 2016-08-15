@@ -169,7 +169,9 @@ class OpenshiftPaas(AbstractPaas):
         print("...Creating app route for %s : %s" % (app.deploy_name, cmd))
         self.openshift_exec(cmd, project)
 
-        patch_cmd = "patch route %s -p '{\"spec\": {\"tls\": {\"termination\": \"edge\",\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" % app.name
+        print("...Patching route to enable tls")
+        patch_cmd = """patch route %s -p '{"spec": {"tls": {"termination": "edge", "insecureEdgeTerminationPolicy": "Redirect"}}}'""" \
+                    % app.deploy_name
         self.openshift_exec(patch_cmd, project)
 
 
