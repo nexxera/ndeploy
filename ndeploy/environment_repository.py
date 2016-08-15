@@ -131,6 +131,16 @@ class EnvironmentRepository:
         """
         return self.environments
 
+    def list_environments_as_str(self):
+        environments = self.list_environments()
+        if len(environments) == 0:
+            return "There is no registered environment."
+
+        result = "\n".join("name:%s, \ttype:%s, \tdeploy_host:%s"
+                  % (env.name, env.type, env.deploy_host) for env in environments)
+
+        return result
+
     def load_environment(self, env_name):
         """
         Gets an existing environment by name

@@ -63,13 +63,13 @@ class NDeployCore:
                                   app_deployment_file_url=app_deployment_file_url)
         self.environment_repository.update_environment(environment)
 
-    def list_environments(self):
+    def list_environments_as_str(self):
         """
         Carrega os Environments salvos.
         Returns: Lista de objetos do tipo Environment
 
         """
-        return self.environment_repository.list_environments()
+        return self.environment_repository.list_environments_as_str()
 
     def get_environment_key(self, name):
         """
@@ -90,9 +90,7 @@ class NDeployCore:
             file: path do arquivo com os dados para deploy.
             group: nome do grupo do projeto, usado em conjunto com name caso não seja informado o file.
             name: nome do projeto, usado em conjunto com group caso não seja informado o file.
-            enviroment: nome do environment onde será feita o deploy.
-
-        Returns:
+            environment: nome do environment onde será feita o deploy.
 
         """
         self.deployer.deploy(file, group, name, environment)
