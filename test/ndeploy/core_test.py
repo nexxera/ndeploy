@@ -33,6 +33,13 @@ class EnvironmentTest(unittest.TestCase):
         self.core.remove_environment("dummy")
         self.env_repo.remove_environment.assert_called_once_with("dummy")
 
+    def test_update_environment_should_call_environment_repository(self):
+        self.core.update_environment("dummy", "dokku", "i.com", "git@git.com")
+        self.assertEqual(1, self.env_repo.update_environment.call_count)
+        env_called = self.env_repo.update_environment.call_args[0][0]
+        self.assertEqual(env_called.__dict__,
+                         Environment("dokku", "dummy", "i.com", "git@git.com").__dict__)
+
     def test_deploy_should_call_deployer(self):
         self.core.deploy("file", "name", "group", "environment")
         self.deployer.deploy.assert_called_once_with("file", "name", "group", "environment")

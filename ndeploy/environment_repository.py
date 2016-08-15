@@ -7,7 +7,8 @@ Posteriormente pode-se implementar a atualização, mas não é algo tão necess
 import json
 import os
 from ndeploy.model import Environment
-from ndeploy.exception import EnvironmentAlreadyExistsError
+from ndeploy.exception import EnvironmentAlreadyExistsError, \
+    EnvironmentDoesNotExistError
 
 
 class EnvironmentRepository:
@@ -34,6 +35,25 @@ class EnvironmentRepository:
 
         self._generate_rsa_for_env(environment.name)
         self.environments.append(environment)
+        self._save_environments()
+
+    def update_environment(self, env):
+        """
+        Updates an environment in the repository and persists to file.
+        The env name will be preserved.
+
+        Raises:
+            EnvironmentDoesNotExistError: if the env.name passed as parameter
+                does not exist in the repository
+
+        Args:
+            env (Environment): the env with updated data
+        """
+        if not self.has_environment(env.name):
+            raise EnvironmentDoesNotExistError(env.name)
+
+        to_update = self.load_environment(env.name)
+        to_update.update(env)
         self._save_environments()
 
     def get_environment_key(self, name):

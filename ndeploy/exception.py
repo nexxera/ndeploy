@@ -39,3 +39,16 @@ class EnvironmentAlreadyExistsError(NDeployError):
         return "Environment with name {} already exists"\
             .format(self.env_name)
 
+
+class EnvironmentDoesNotExistError(NDeployError):
+    """
+    Exception thrown when user tries to get an inexistent environment
+    """
+    def __init__(self, env_name):
+        self.env_name = env_name
+
+    def __str__(self):
+        return "Environment with name {} does not exist" \
+            .format(self.env_name)
+
+
