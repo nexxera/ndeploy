@@ -26,8 +26,8 @@ class EnvironmentTest(unittest.TestCase):
                                                           "git@gitlab.nexxera.com:/group/my-app.git").__dict__)
 
     def test_list_environments_should_call_environment_repository(self):
-        self.core.list_environments()
-        self.assertEqual(1, self.env_repo.list_environments.call_count)
+        self.core.list_environments_as_str()
+        self.assertEqual(1, self.env_repo.list_environments_as_str.call_count)
 
     def test_remove_environments_should_call_environment_repository(self):
         self.core.remove_environment("dummy")

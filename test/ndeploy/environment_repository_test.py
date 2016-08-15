@@ -99,6 +99,14 @@ class EnvironmentTest(unittest.TestCase):
         self.assertEqual("git@git.nexxera.com:group/my-app.git",
                          updated_env.app_deployment_file_url)
 
+    def test_should_advise_user_if_any_environment_is_registered(self):
+        self.assertEqual("There is no registered environment.", self.env_repo.list_environments_as_str())
+
+    def test_list_env_as_str(self):
+        self._add_integrated_dev_environment()
+        self.assertEqual("name:integrated-dev, \ttype:dokku, \tdeploy_host:integrated-dev.nexxera.com",
+                         self.env_repo.list_environments_as_str())
+
     # helpers
 
     def _add_integrated_dev_environment(self):

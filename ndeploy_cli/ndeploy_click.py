@@ -20,9 +20,9 @@ def ndeploy():
     pass
 
 
-@click.option('-f','--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
-@click.option('-h','--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
-@click.option('-n','--name', prompt='Environment name', help='Environment name.')
+@click.option('-f', '--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
+@click.option('-h', '--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
+@click.option('-n', '--name', prompt='Environment name', help='Environment name.')
 @click.option('-t', '--type', prompt='Provider type', help="Provider type.",
               type=click.Choice(provider_repository.get_available_providers().keys()))
 @ndeploy.command()
@@ -31,12 +31,14 @@ def addenv(**kwargs):
                                  type=kwargs['type'],
                                  deploy_host=kwargs['deploy_host'],
                                  app_deployment_file_url=kwargs['file_url'])
+    print("Environment added.")
 
 
 @ndeploy.command()
 @click.option('-n', '--name', prompt='Environment name', help="Environment name.")
 def delenv(**kwargs):
     ndeploy_core.remove_environment(kwargs['name'])
+    print("Environment deleted.")
 
 
 @click.option('-f', '--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
@@ -55,9 +57,10 @@ def updatenv(**kwargs):
 
 @ndeploy.command()
 def listenv(**kwargs):
-    environments = ndeploy_core.list_environments()
-    for environment in environments:
-        print("name:%s, \ttype:%s, \tdeploy_host:%s" % (environment.name, environment.type, environment.deploy_host))
+    print(ndeploy_core.list_environments_as_str())
+    # environments = ndeploy_core.list_environments_as_string()
+    # for environment in environments:
+    #     print("name:%s, \ttype:%s, \tdeploy_host:%s" % (environment.name, environment.type, environment.deploy_host))
 
 
 @ndeploy.command()
@@ -67,10 +70,10 @@ def keyenv(**kwargs):
 
 
 @ndeploy.command()
-@click.option('-f','--file', help="App deployment file.")
-@click.option('-g','--group', help="Group name of project.")
-@click.option('-n','--name', help="Name project.")
-@click.option('-e','--environment', help="Environment configured.")
+@click.option('-f', '--file', help="App deployment file.")
+@click.option('-g', '--group', help="Group name of project.")
+@click.option('-n', '--name', help="Name project.")
+@click.option('-e', '--environment', help="Environment configured.")
 def deploy(**kwargs):
     ndeploy_core.deploy(file=kwargs['file'],
                         group=kwargs['group'],
