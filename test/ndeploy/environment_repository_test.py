@@ -5,8 +5,9 @@ import shutil
 
 from ndeploy.environment_repository import EnvironmentRepository
 from ndeploy.model import Environment
-from ndeploy.exception import EnvironmentAlreadyExistsError
+from ndeploy.exception import EnvironmentAlreadyExistsError, EnvironmentDoesNotExistError
 from unittest.mock import MagicMock
+
 
 
 class EnvironmentTest(unittest.TestCase):
@@ -77,6 +78,26 @@ class EnvironmentTest(unittest.TestCase):
         self._add_integrated_dev_environment()
         with self.assertRaises(EnvironmentAlreadyExistsError):
             self._add_integrated_dev_environment()
+
+    def test_updates_nonexistent_environment_raises_error(self):
+        with self.assertRaises(EnvironmentDoesNotExistError):
+            self.env_repo.update_environment(
+                Environment(name="invalid-env", type="openshift",
+                            deploy_host="", app_deployment_file_url=""))
+
+    def test_update_environment(self):
+        self._add_integrated_dev_environment()
+        self.env_repo.update_environment(
+            Environment(name="integrated-dev", type="openshift",
+                        deploy_host="integrated-dev2.nexxera.com",
+                        app_deployment_file_url="git@git.nexxera.com:group/my-app.git"))
+
+        updated_env = self.env_repo.load_environment("integrated-dev")
+        self.assertEqual("openshift", updated_env.type)
+        self.assertEqual("integrated-dev2.nexxera.com",
+                         updated_env.deploy_host)
+        self.assertEqual("git@git.nexxera.com:group/my-app.git",
+                         updated_env.app_deployment_file_url)
 
     # helpers
 

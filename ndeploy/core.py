@@ -47,6 +47,23 @@ class NDeployCore:
         """
         self.environment_repository.remove_environment(name)
 
+    def update_environment(self, name, type, deploy_host, app_deployment_file_url):
+        """
+        Updates the environment identified by name arg
+
+        Args:
+            name (str): the name of the environment to update
+            type (str): the new environment type
+            deploy_host (str): the new deploy_host
+            app_deployment_file_url (str): the new app_deployment_file_url type
+        """
+        environment = Environment(name=name,
+                                  type=type,
+                                  deploy_host=deploy_host,
+                                  app_deployment_file_url=app_deployment_file_url)
+        self.environment_repository.update_environment(environment)
+
+
     def list_environments(self):
         """
         Carrega os Environments salvos.
@@ -56,8 +73,16 @@ class NDeployCore:
         return self.environment_repository.list_environments()
 
     def get_environment_key(self, name):
-        return self.environment_repository.get_environment_key(name)
+        """
+        Returns the environment rsa public key
 
+        Args:
+            name (str): the environment name
+
+        Returns:
+            the env public key in openssh format
+        """
+        return self.environment_repository.get_environment_key(name)
 
     def deploy(self, file=None, group=None, name=None, environment=None):
         """

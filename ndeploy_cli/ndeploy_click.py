@@ -14,6 +14,7 @@ paas_repository = paas.PaasRepository()
 deployer = deployer.Deployer(paas_repository, env_repository)
 ndeploy_core = core.NDeployCore(env_repository, deployer)
 
+
 @click.group()
 def ndeploy():
     pass
@@ -26,15 +27,28 @@ def ndeploy():
 @ndeploy.command()
 def addenv(**kwargs):
     ndeploy_core.add_environment(name=kwargs['name'],
-                         type=kwargs['type'],
-                         deploy_host=kwargs['deploy_host'],
-                         app_deployment_file_url=kwargs['file_url'])
+                                 type=kwargs['type'],
+                                 deploy_host=kwargs['deploy_host'],
+                                 app_deployment_file_url=kwargs['file_url'])
 
 
 @ndeploy.command()
 @click.option('-n', '--name', prompt='Environment name', help="Environment name.")
 def delenv(**kwargs):
     ndeploy_core.remove_environment(kwargs['name'])
+
+
+@click.option('-f','--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
+@click.option('-h','--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
+@click.option('-t', '--type', prompt='PaaS type', help="PaaS type.", type=click.Choice(paas_repository.get_available_paas().keys()))
+@click.option('-n','--name', prompt='Environment name', help='Environment name.')
+@ndeploy.command()
+def updatenv(**kwargs):
+    ndeploy_core.update_environment(name=kwargs['name'],
+                                    type=kwargs['type'],
+                                    deploy_host=kwargs['deploy_host'],
+                                    app_deployment_file_url=kwargs['file_url'])
+    print("Environment updated.")
 
 
 @ndeploy.command()
@@ -49,6 +63,7 @@ def listenv(**kwargs):
 def keyenv(**kwargs):
     print(ndeploy_core.get_environment_key(kwargs['name']))
 
+
 @ndeploy.command()
 @click.option('-f','--file', help="App deployment file.")
 @click.option('-g','--group', help="Group name of project.")
@@ -56,9 +71,9 @@ def keyenv(**kwargs):
 @click.option('-e','--environment', help="Environment configured.")
 def deploy(**kwargs):
     ndeploy_core.deploy(file=kwargs['file'],
-                group=kwargs['group'],
-                name=kwargs['name'],
-                environment=kwargs['environment'])
+                        group=kwargs['group'],
+                        name=kwargs['name'],
+                        environment=kwargs['environment'])
 
 
 if __name__ == '__main__':

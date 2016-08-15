@@ -22,6 +22,19 @@ class Environment:
         self.deploy_host = deploy_host
         self.app_deployment_file_url = app_deployment_file_url
 
+    def update(self, env):
+        """
+        Updates an instance of Environment.
+        The environment name will keep the same.
+
+        Args:
+            env (Environment): the env with updated data
+        """
+        assert env.name == self.name
+        self.type = env.type
+        self.deploy_host = env.deploy_host
+        self.app_deployment_file_url = env.app_deployment_file_url
+
 
 class App:
     """
