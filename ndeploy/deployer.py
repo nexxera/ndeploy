@@ -1,9 +1,9 @@
 import json
 import shutil
-from subprocess import call
 import os.path
 from ndeploy.model import App, Environment
-from ndeploy.exception import InvalidArgumentError, AppConfigFileCloneError
+from ndeploy.exception import InvalidArgumentError, \
+    AppConfigFileCloneError, BadFormedRemoteAppFileUrlError
 
 
 class Deployer:
@@ -53,14 +53,15 @@ class Deployer:
 
         self.provider_repository.get_provider_for(env.type).deploy(app, env)
 
-    def _get_remote_conf(self, repo_url, relative_path, rsa_path):
+    def _get_remote_conf(self, repo_url, branch, file_relative_path, rsa_path):
         """
         Gets the remote app configuration file in a git repository
 
         Args:
             repo_url (str): the remote repo url
-            relative_path: the path of the file relative to the repo root
-            rsa_path: path to the repo rsa private key
+            branch (str): git branch name
+            file_relative_path (str): the path of the file relative to the repo root
+            rsa_path (str): path to the repo rsa private key
 
         Returns:
             dict containing the contents of the remote json file
@@ -76,10 +77,13 @@ class Deployer:
 
         print("getting config file from " + repo_url)
 
-        os.system("ssh-agent bash -c 'ssh-add {rsa_path}; git clone {repo_url} {local_folder}'"
-                  .format(rsa_path=rsa_path, repo_url=repo_url, local_folder=local_folder))
+        os.system("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
+                  "{branch} {file_relative_path} | tar -x -C {local_folder}'"
+                  .format(rsa_path=rsa_path, repo_url=repo_url,
+                          branch=branch, local_folder=local_folder,
+                          file_relative_path=file_relative_path))
 
-        cloned_file = os.path.join(local_folder, relative_path)
+        cloned_file = os.path.join(local_folder, file_relative_path)
         if not os.path.isfile(cloned_file):
             raise AppConfigFileCloneError(repo_url, cloned_file)
 
@@ -87,6 +91,27 @@ class Deployer:
             app_data = json.load(json_data)
 
         return app_data
+
+    def _format_remote_app_file_url(self, group, name, environment):
+        """
+        Formats the environenmt.app_deployment_file_url with group and
+        name info and return a tuple containing the url info
+        Args:
+            group (str):
+            name (str):
+            environment (str):
+
+        Returns:
+            Tuple containing (repo_url, branch, file_relative_path)
+
+        """
+        repo_info = environment.app_deployment_file_url.split()
+        if len(repo_info) != 3:
+            raise BadFormedRemoteAppFileUrlError(name, environment.name,
+                                                 environment.app_deployment_file_url)
+
+        return repo_info[0].format(group=group), repo_info[1], \
+            repo_info[2].format(name=name)
 
     def _resolve_remote_app_file(self, group, name, environment):
         """
@@ -107,8 +132,8 @@ class Deployer:
         assert group
 
         rsa_key = self.env_repository.get_env_private_key_path(environment.name)
-        repo_url = environment.app_deployment_file_url.format(group=group)
-        app_data = self._get_remote_conf(repo_url, name + ".json", rsa_key)
+        repo_url, branch, file_relative_path = self._format_remote_app_file_url(group, name, environment)
+        app_data = self._get_remote_conf(repo_url, branch, file_relative_path, rsa_key)
 
         return app_data
 

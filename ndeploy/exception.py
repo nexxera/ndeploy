@@ -28,6 +28,28 @@ class AppConfigFileCloneError(NDeployError):
             .format(self.repo, self.local_file)
 
 
+class BadFormedRemoteAppFileUrlError(NDeployError):
+    """
+    Thrown when an app deployment file url was passed in wrong format
+    """
+    def __init__(self, app, env, url):
+        """
+        Args:
+            app (str): app name
+            env (str): env name
+            url (str): bad formed url
+        """
+        self.app = app
+        self.env = env
+        self.url = url
+
+    def __str__(self):
+        return "Could not parse the app deployment file url for environment {env}. " \
+               "\nApp: {app} " \
+               "\nUrl: {url}".format(env=self.env, app=self.app, url=self.url)
+
+
+
 class EnvironmentAlreadyExistsError(NDeployError):
     """
     Excpetion thrown when user tries to add two environment with same name
