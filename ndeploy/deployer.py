@@ -65,8 +65,8 @@ class Deployer:
         assert group
 
         rsa_key = self.env_repository.get_env_private_key_path(environment.name)
-        repo_url = environment.app_deployment_file_url.format(group)
-        app_data = self._get_remote_conf(repo_url, os.path.join(name, "app.json"), rsa_key)
+        repo_url = environment.app_deployment_file_url.format(group=group)
+        app_data = self._get_remote_conf(repo_url, name + ".json", rsa_key)
 
         return app_data
 
