@@ -42,16 +42,20 @@ class Deployer:
 
     def _get_remote_conf(self, repo_url, relative_path, rsa_path):
 
-        local_folder = "tmp"
+        local_folder = os.path.join(
+            self.env_repository.get_ndeploy_dir(), "tmp")
 
         if os.path.isdir(local_folder):
             shutil.rmtree(local_folder)
 
-        print("getting config file from " + repo_url)
-        call(["ssh-agent", "bash", "-c", "'ssh-add {rsa_path}; git clone {repo_url} {local_folder}'"
-             .format({"rsa_path": rsa_path, "repo_url": repo_url, "local_folder": local_folder})])
+        os.makedirs(local_folder)
 
-        cloned_file = os.path.join("tmp", relative_path)
+        print("getting config file from " + repo_url)
+
+        os.system("ssh-agent bash -c 'ssh-add {rsa_path}; git clone {repo_url} {local_folder}'"
+             .format(rsa_path=rsa_path, repo_url=repo_url, local_folder=local_folder))
+
+        cloned_file = os.path.join(local_folder, relative_path)
         if not os.path.isfile(cloned_file):
             raise AppConfigFileCloneError(repo_url, cloned_file)
 
