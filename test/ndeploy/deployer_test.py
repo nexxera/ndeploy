@@ -3,7 +3,7 @@ import os
 import json
 from unittest import mock
 
-from ndeploy.exception import InvalidArgumentError
+from ndeploy.exception import InvalidArgumentError, BadFormedRemoteConfigUrlError
 from ndeploy.deployer import Deployer
 from ndeploy.model import Environment
 
@@ -55,11 +55,20 @@ class DeployerTest(unittest.TestCase):
     def test_deploy_with_group_name_and_registered_env(self, _get_remote_conf):
         _get_remote_conf.return_value = {"name": "app", "deploy_name": "financial"}
         self._configure_env("qa", "qa.nexxera.com", "openshift",
-                            "git@git.nexxera.com:environment-conf-qa/{group}.git")
+                            "git@git.nexxera.com:environment-conf-qa/{group}.git master {name}.json")
         self.deployer.deploy(group="financial-platform", name="financial-platform-core",
                              environment="openshift")
 
         self._assert_deploy_call("app", "financial", "qa", "qa.nexxera.com", "openshift")
+
+    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
+    def test_should_raise_exception_if_remote_app_url_is_bad_formed(self, _get_remote_conf):
+        _get_remote_conf.return_value = {"name": "app", "deploy_name": "financial"}
+        with self.assertRaises(BadFormedRemoteConfigUrlError):
+            self._configure_env("qa", "qa.nexxera.com", "openshift",
+                                "git@git.nexxera.com:environment-conf-qa/{group}.git")
+            self.deployer.deploy(group="financial-platform", name="financial-platform-core",
+                                 environment="openshift")
 
     def _assert_deploy_call(self, expected_app_name, expected_app_deploy_name,
                             expected_env_name, expected_env_deploy_host, expected_env_type):
