@@ -20,7 +20,8 @@ def ndeploy():
     pass
 
 
-@click.option('-f', '--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
+@click.option('-f', '--file_url', prompt='App deployment file URL',
+              help="App deployment file URL, ex.: git@myhost.com:myconfs/{group} master {name}.json.")
 @click.option('-h', '--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
 @click.option('-n', '--name', prompt='Environment name', help='Environment name.')
 @click.option('-t', '--type', prompt='Provider type', help="Provider type.",
@@ -41,7 +42,8 @@ def delenv(**kwargs):
     print("Environment deleted.")
 
 
-@click.option('-f', '--file_url', prompt='App deployment file URL', help="App deployment file URL, ex.: git@myhost.com/myconfs/{group}/{name}.json.")
+@click.option('-f', '--file_url', prompt='App deployment file URL',
+              help="App deployment file URL, ex.: git@myhost.com:myconfs/{group} master {name}.json.")
 @click.option('-h', '--deploy_host', prompt='Deploy deploy_host', help="Deploy deploy_host.")
 @click.option('-t', '--type', prompt='Provider type', help="Provider type.",
               type=click.Choice(provider_repository.get_available_providers().keys()))
@@ -58,9 +60,6 @@ def updatenv(**kwargs):
 @ndeploy.command()
 def listenv(**kwargs):
     print(ndeploy_core.list_environments_as_str())
-    # environments = ndeploy_core.list_environments_as_string()
-    # for environment in environments:
-    #     print("name:%s, \ttype:%s, \tdeploy_host:%s" % (environment.name, environment.type, environment.deploy_host))
 
 
 @ndeploy.command()
