@@ -3,7 +3,7 @@ import shutil
 import os.path
 from ndeploy.model import App, Environment
 from ndeploy.exception import InvalidArgumentError, \
-    AppConfigFileCloneError, BadFormedRemoteAppFileUrlError
+    AppConfigFileCloneError, BadFormedRemoteConfigUrlError
 
 
 class Deployer:
@@ -107,8 +107,8 @@ class Deployer:
         """
         repo_info = environment.app_deployment_file_url.split()
         if len(repo_info) != 3:
-            raise BadFormedRemoteAppFileUrlError(name, environment.name,
-                                                 environment.app_deployment_file_url)
+            raise BadFormedRemoteConfigUrlError(name, environment.name,
+                                                environment.app_deployment_file_url)
 
         return repo_info[0].format(group=group), repo_info[1], \
             repo_info[2].format(name=name)

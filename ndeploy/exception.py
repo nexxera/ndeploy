@@ -28,7 +28,7 @@ class AppConfigFileCloneError(NDeployError):
             .format(self.repo, self.local_file)
 
 
-class BadFormedRemoteAppFileUrlError(NDeployError):
+class BadFormedRemoteConfigUrlError(NDeployError):
     """
     Thrown when an app deployment file url was passed in wrong format
     """
@@ -47,7 +47,6 @@ class BadFormedRemoteAppFileUrlError(NDeployError):
         return "Could not parse the app deployment file url for environment {env}. " \
                "\nApp: {app} " \
                "\nUrl: {url}".format(env=self.env, app=self.app, url=self.url)
-
 
 
 class EnvironmentAlreadyExistsError(NDeployError):
