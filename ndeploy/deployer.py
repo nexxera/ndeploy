@@ -30,8 +30,7 @@ class Deployer:
         was passed or in a remote git repository with the url configured
         in the environment (@see ndeploy.model.Environment.app_deployment_file_url)
 
-        If remotely the url will be formatted with the `group` and `name`
-        passed.
+        If remotely the url will be formatted with `group` and `name` args.
 
         Args:
             file (str): path to the local json configuration file
