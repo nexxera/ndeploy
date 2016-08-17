@@ -7,7 +7,7 @@ from ndeploy.environment_repository import EnvironmentRepository
 from ndeploy.model import Environment
 from ndeploy.exception import EnvironmentAlreadyExistsError, EnvironmentDoesNotExistError
 from unittest.mock import MagicMock
-
+from .test_helpers import get_valid_deployment_file_url
 
 
 class EnvironmentTest(unittest.TestCase):
@@ -83,20 +83,20 @@ class EnvironmentTest(unittest.TestCase):
         with self.assertRaises(EnvironmentDoesNotExistError):
             self.env_repo.update_environment(
                 Environment(name="invalid-env", type="openshift",
-                            deploy_host="", app_deployment_file_url=""))
+                            deploy_host=""))
 
     def test_update_environment(self):
         self._add_integrated_dev_environment()
         self.env_repo.update_environment(
             Environment(name="integrated-dev", type="openshift",
                         deploy_host="integrated-dev2.nexxera.com",
-                        app_deployment_file_url="git@git.nexxera.com:group/my-app.git"))
+                        app_deployment_file_url=get_valid_deployment_file_url()))
 
         updated_env = self.env_repo.load_environment("integrated-dev")
         self.assertEqual("openshift", updated_env.type)
         self.assertEqual("integrated-dev2.nexxera.com",
                          updated_env.deploy_host)
-        self.assertEqual("git@git.nexxera.com:group/my-app.git",
+        self.assertEqual(get_valid_deployment_file_url(),
                          updated_env.app_deployment_file_url)
 
     def test_should_advise_user_if_any_environment_is_registered(self):
@@ -114,14 +114,14 @@ class EnvironmentTest(unittest.TestCase):
             type="dokku",
             name="integrated-dev",
             deploy_host="integrated-dev.nexxera.com",
-            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git"))
+            app_deployment_file_url=get_valid_deployment_file_url()))
 
     def _add_qa_environment(self):
         self._add_environment(Environment(
             type="openshift",
             name="qa",
             deploy_host="qa.nexxera.com",
-            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git"))
+            app_deployment_file_url=get_valid_deployment_file_url()))
 
     def _add_environment(self, env):
         self.env_repo.add_environment(env)

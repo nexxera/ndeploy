@@ -32,21 +32,20 @@ class BadFormedRemoteConfigUrlError(NDeployError):
     """
     Thrown when an app deployment file url was passed in wrong format
     """
-    def __init__(self, app, env, url):
+    def __init__(self, env, url):
         """
         Args:
-            app (str): app name
             env (str): env name
             url (str): bad formed url
         """
-        self.app = app
         self.env = env
         self.url = url
 
     def __str__(self):
         return "Could not parse the app deployment file url for environment {env}. " \
-               "\nApp: {app} " \
-               "\nUrl: {url}".format(env=self.env, app=self.app, url=self.url)
+               "\nCurrent url: {url}" \
+               "\nUrl should be GIT_REPO GIT_BRANCH RELATIVE_JSON_PATH" \
+               "\nExample: git@git.nexxera.com/conf-qa/{{group}}.git develop {{name}}.json".format(env=self.env, url=self.url)
 
 
 class EnvironmentAlreadyExistsError(NDeployError):
