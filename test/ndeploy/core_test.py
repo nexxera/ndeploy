@@ -4,6 +4,7 @@ from unittest import mock
 
 from ndeploy import core
 from ndeploy.model import Environment
+from .test_helpers import get_valid_deployment_file_url
 
 
 class EnvironmentTest(unittest.TestCase):
@@ -18,12 +19,12 @@ class EnvironmentTest(unittest.TestCase):
 
     def test_add_environments_should_call_environment_repository(self):
         self.core.add_environment("dokku", "dummy", "integrated-dev.nexxera.com",
-                                  "git@gitlab.nexxera.com:/group/my-app.git")
+                                  get_valid_deployment_file_url())
 
         self.assertEqual(1, self.env_repo.add_environment.call_count)
         env_called = self.env_repo.add_environment.call_args[0][0]
         self.assertEqual(env_called.__dict__, Environment("dummy", "dokku", "integrated-dev.nexxera.com",
-                                                          "git@gitlab.nexxera.com:/group/my-app.git").__dict__)
+                                                          get_valid_deployment_file_url()).__dict__)
 
     def test_list_environments_should_call_environment_repository(self):
         self.core.list_environments_as_str()
@@ -34,11 +35,11 @@ class EnvironmentTest(unittest.TestCase):
         self.env_repo.remove_environment.assert_called_once_with("dummy")
 
     def test_update_environment_should_call_environment_repository(self):
-        self.core.update_environment("dummy", "dokku", "i.com", "git@git.com")
+        self.core.update_environment("dummy", "dokku", "i.com", get_valid_deployment_file_url())
         self.assertEqual(1, self.env_repo.update_environment.call_count)
         env_called = self.env_repo.update_environment.call_args[0][0]
         self.assertEqual(env_called.__dict__,
-                         Environment("dokku", "dummy", "i.com", "git@git.com").__dict__)
+                         Environment("dokku", "dummy", "i.com", get_valid_deployment_file_url()).__dict__)
 
     def test_deploy_should_call_deployer(self):
         self.core.deploy("file", "name", "group", "environment")

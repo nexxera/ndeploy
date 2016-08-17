@@ -92,27 +92,6 @@ class Deployer:
 
         return app_data
 
-    def _format_remote_app_file_url(self, group, name, environment):
-        """
-        Formats the environenmt.app_deployment_file_url with group and
-        name info and return a tuple containing the url info
-        Args:
-            group (str):
-            name (str):
-            environment (str):
-
-        Returns:
-            Tuple containing (repo_url, branch, file_relative_path)
-
-        """
-        repo_info = environment.app_deployment_file_url.split()
-        if len(repo_info) != 3:
-            raise BadFormedRemoteConfigUrlError(name, environment.name,
-                                                environment.app_deployment_file_url)
-
-        return repo_info[0].format(group=group), repo_info[1], \
-            repo_info[2].format(name=name)
-
     def _resolve_remote_app_file(self, group, name, environment):
         """
         Resolves the remote app configuration file.
@@ -132,7 +111,7 @@ class Deployer:
         assert group
 
         rsa_key = self.env_repository.get_env_private_key_path(environment.name)
-        repo_url, branch, file_relative_path = self._format_remote_app_file_url(group, name, environment)
+        repo_url, branch, file_relative_path = environment.format_remote_deployment_file_url(group, name)
         app_data = self._get_remote_conf(repo_url, branch, file_relative_path, rsa_key)
 
         return app_data

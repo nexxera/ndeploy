@@ -1,6 +1,7 @@
 """
 Models usados no processo de deploy.
 """
+from ndeploy.exception import BadFormedRemoteConfigUrlError
 
 
 class Environment:
@@ -22,6 +23,8 @@ class Environment:
         self.deploy_host = deploy_host
         self.app_deployment_file_url = app_deployment_file_url
 
+        self.check_is_valid()
+
     def update(self, env):
         """
         Updates an instance of Environment.
@@ -34,6 +37,51 @@ class Environment:
         self.type = env.type
         self.deploy_host = env.deploy_host
         self.app_deployment_file_url = env.app_deployment_file_url
+
+        self.check_is_valid()
+
+    def check_is_valid(self):
+        """
+        Verifies if the Environment data is valid.
+
+        Raises:
+            BadFormedRemoteConfigUrlError if `app_deployment_file_url`
+                is invalid
+
+        """
+        if not self.app_deployment_file_url_is_valid():
+            raise BadFormedRemoteConfigUrlError(self.name,
+                                                self.app_deployment_file_url)
+
+    def app_deployment_file_url_is_valid(self):
+        """
+        Tells if current environment data is in a valid format
+
+        Returns:
+            True if is valid format, False otherwise
+
+        """
+        if self.app_deployment_file_url is None:
+            return True
+
+        repo_info = self.app_deployment_file_url.split()
+        return len(repo_info) == 3 and "{group}" in repo_info[0] and "{name}" in repo_info[2]
+
+    def format_remote_deployment_file_url(self, group, name):
+        """
+        Parses and formats the app_deployment_file_url with group and
+        name and return a tuple containing the repo info
+        Args:
+            group (str):
+            name (str):
+
+        Returns:
+            Tuple containing (repo_url, branch, file_relative_path)
+
+        """
+        self.check_is_valid()
+        repo_info = self.app_deployment_file_url.split()
+        return repo_info[0].format(group=group), repo_info[1], repo_info[2].format(name=name)
 
 
 class App:

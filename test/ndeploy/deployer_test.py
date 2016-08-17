@@ -41,7 +41,7 @@ class DeployerTest(unittest.TestCase):
 
     def test_deploy_with_file_and_registered_env(self):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
-        self._configure_env("qa", "qa.nexxera.com", "openshift", "url")
+        self._configure_env("qa", "qa.nexxera.com", "openshift", None)
 
         self.deployer.deploy(file=local_file, environment="openshift")
 

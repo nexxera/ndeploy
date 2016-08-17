@@ -3,6 +3,8 @@ import os
 import unittest
 
 from ndeploy.model import App, Environment
+from ndeploy.exception import BadFormedRemoteConfigUrlError
+from .test_helpers import get_valid_deployment_file_url
 
 
 class AssembleModelTest(unittest.TestCase):
@@ -22,7 +24,7 @@ class AssembleModelTest(unittest.TestCase):
                            deploy_name="super-app",
                            repository="git@gitlab.nexxera.com:group/my-app.git",
                            image="gitlab-dreg.nexxera.com/group/my-app",
-                           env_vars=dict(APP_ENV="Development",EMAIL_HOST="smtp@domain.com"))
+                           env_vars=dict(APP_ENV="Development", EMAIL_HOST="smtp@domain.com"))
 
         self.assertEqual(app.__dict__, app_expected.__dict__)
 
@@ -38,7 +40,7 @@ class AssembleModelTest(unittest.TestCase):
             type="dokku",
             name="integrated-dev",
             deploy_host="integrated-dev.nexxera.com",
-            app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
+            app_deployment_file_url=get_valid_deployment_file_url())
 
         self.assertEqual(environment.__dict__, environment_expected.__dict__)
 
@@ -54,3 +56,12 @@ class AssembleModelTest(unittest.TestCase):
         app = App("name")
         self.assertEqual("name", app.deploy_name)
 
+    def test_wrong_app_deployment_file_url(self):
+        with self.assertRaises(BadFormedRemoteConfigUrlError):
+            Environment(type="dokku", name="qa", deploy_host="qa.nexxera.com",
+                        app_deployment_file_url="git@git.nexxera.com")
+
+    # def test_null_app_deployment_file_url_should_be_accepted(self):
+    #     with self.assertRaises(BadFormedRemoteConfigUrlError):
+    #         Environment(type="dokku", name="qa", deploy_host="qa.nexxera.com",
+    #                     app_deployment_file_url="git@gitlab.nexxera.com:group/{mygroup}.git")
