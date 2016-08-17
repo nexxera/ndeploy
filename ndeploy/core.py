@@ -49,7 +49,7 @@ class NDeployCore:
 
     def update_environment(self, name, type, deploy_host, app_deployment_file_url):
         """
-        Updates the environment identified by name arg
+        Updates the environment identified by `name`
 
         Args:
             name (str): the name of the environment to update

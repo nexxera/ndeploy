@@ -107,6 +107,11 @@ class EnvironmentTest(unittest.TestCase):
         self.assertEqual("name:integrated-dev, \ttype:dokku, \tdeploy_host:integrated-dev.nexxera.com",
                          self.env_repo.list_environments_as_str())
 
+    def test_env_public_key_should_be_private_plus_pub(self):
+        self._add_integrated_dev_environment()
+        self.assertEqual(self.env_repo.get_env_private_key_path("integrated-dev") + ".pub",
+                         self.env_repo.get_env_public_key_path("integrated-dev"))
+
     # helpers
 
     def _add_integrated_dev_environment(self):

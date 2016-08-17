@@ -5,10 +5,12 @@ import os
 
 
 class ShellExec:
+    """
+    Class responsible for executing commands in a OS shell
+    """
 
     @staticmethod
     def execute_program(cmd, silent=False):
-        args = shlex.split(cmd)
         p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         err = err.decode().strip()

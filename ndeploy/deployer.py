@@ -111,8 +111,10 @@ class Deployer:
         assert group
 
         rsa_key = self.env_repository.get_env_private_key_path(environment.name)
-        repo_url, branch, file_relative_path = environment.format_remote_deployment_file_url(group, name)
-        app_data = self._get_remote_conf(repo_url, branch, file_relative_path, rsa_key)
+        repo_url, branch, file_relative_path = \
+            environment.format_remote_deployment_file_url(group, name)
+        app_data = self._get_remote_conf(repo_url, branch,
+                                         file_relative_path, rsa_key)
 
         return app_data
 
