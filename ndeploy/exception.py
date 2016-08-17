@@ -72,3 +72,15 @@ class EnvironmentDoesNotExistError(NDeployError):
             .format(self.env_name)
 
 
+class InvalidVarTypeError(NDeployError):
+    """
+    Thrown when an invalid var type is passed in env_vars app field
+    """
+    def __init__(self, var_name):
+        self.var_name = var_name
+
+    def __str__(self):
+        return "Could not parse var type with name {}" \
+            .format(self.var_name)
+
+

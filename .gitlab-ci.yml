@@ -11,7 +11,7 @@ unit-test:
     tags:
     - python-351
     script:
-    - pip install -r requirements-dev.txt
+    - pip install -r requirements.txt
     - paver coverage
 
 metric-analyze:

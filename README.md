@@ -56,7 +56,7 @@ git clone https://git.nexxera.com/ci-utils/ndeploy.git
 Instalar dependências:
 
 ```
-pip install -r "requirements-dev.txt" 
+pip install -r "requirements.txt"
 ```
 
 Rodar testes:

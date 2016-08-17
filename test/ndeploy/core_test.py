@@ -34,6 +34,10 @@ class EnvironmentTest(unittest.TestCase):
         self.core.remove_environment("dummy")
         self.env_repo.remove_environment.assert_called_once_with("dummy")
 
+    def test_get_environment_key_should_call_environment_repository(self):
+        self.core.get_environment_key("dummy")
+        self.env_repo.get_environment_key.assert_called_once_with("dummy")
+
     def test_update_environment_should_call_environment_repository(self):
         self.core.update_environment("dummy", "dokku", "i.com", get_valid_deployment_file_url())
         self.assertEqual(1, self.env_repo.update_environment.call_count)
