@@ -16,7 +16,7 @@ class OpenShiftNameTooLongError(NDeployError):
         self.name = name
 
     def __str__(self):
-        return "The app deploy name {} is too long for openshift handle.\n" \
+        return "The app deploy name {} is too long for openshift to handle.\n" \
                "Use a name shorter than 24 characteres in App deploy_name field."\
             .format(self.name)
 
@@ -174,7 +174,6 @@ class OpenshiftProvider(AbstractProvider):
                     % app.deploy_name
         self.openshift_exec(patch_cmd, project)
 
-
     def get_openshift_app_host(self, app, env):
         """
         Returns the host where app will be deployed
@@ -183,7 +182,8 @@ class OpenshiftProvider(AbstractProvider):
             app (App): App object
             env (Environment): Environment object
 
-        Return the host url of the app
+        Returns:
+            the host url of the app
         """
         return "%s-%s.%s" % (app.deploy_name, self.get_openshift_area_name(env), env.deploy_host)
 
