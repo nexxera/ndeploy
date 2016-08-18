@@ -62,7 +62,7 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
 
         """
-        project = self.get_openshift_area_name(environment)
+        project = self.get_openshift_area_name(app)
         self.openshift_exec("delete all -l app={app_name}"
                             .format(app_name=app.deploy_name), project)
 
@@ -79,15 +79,15 @@ class OpenshiftProvider(AbstractProvider):
         """
         self.validate_deploy_name(app)
         self.handle_login()
-        self.configure_project(env)
-        create_app_callback(app, env)
+        self.configure_project(app)
+        create_app_callback(app)
         self.expose_service(app, env)
 
     def validate_deploy_name(self, app):
         if len(app.deploy_name) > 24:
             raise OpenShiftNameTooLongError(app.deploy_name)
 
-    def create_app_by_image(self, app, env):
+    def create_app_by_image(self, app):
         """
         Creates the app in the environment by image
 
@@ -98,7 +98,7 @@ class OpenshiftProvider(AbstractProvider):
         print(app.env_vars)
         print("Deploying app by image: %s, image: %s" % (app.deploy_name, app.image))
 
-        project = self.get_openshift_area_name(env)
+        project = self.get_openshift_area_name(app)
         self.openshift_exec("new-app {image_url} --name {app_name}"
                             .format(image_url=app.image,
                                     app_name=app.deploy_name), project)
@@ -108,7 +108,7 @@ class OpenshiftProvider(AbstractProvider):
                             .format(app_name=app.deploy_name,
                                     env_vars=self.prepare_env_vars(app.env_vars)), project)
 
-    def create_app_by_source(self, app, env):
+    def create_app_by_source(self, app):
         """
         Creates the app in the environment by source
 
@@ -118,7 +118,7 @@ class OpenshiftProvider(AbstractProvider):
         """
         print("Deploying app by source: %s, group: repository: %s" % (app.name, app.repository))
 
-        project = self.get_openshift_area_name(env)
+        project = self.get_openshift_area_name(app)
         self.openshift_exec("new-app {source_repo} --name {app_name}"
                             .format(source_repo=app.repository,
                                     app_name=app.deploy_name), project)
@@ -160,7 +160,7 @@ class OpenshiftProvider(AbstractProvider):
             env (Environment): Environment object
         """
         route_name = app.deploy_name
-        project = self.get_openshift_area_name(env)
+        project = self.get_openshift_area_name(app)
 
         if not self.route_exist(route_name, project):
             self.create_route(app, env)
@@ -176,7 +176,7 @@ class OpenshiftProvider(AbstractProvider):
             app (App): app object
             env (Environment): environment
         """
-        project = self.get_openshift_area_name(env)
+        project = self.get_openshift_area_name(app)
         cmd = "expose service/%s --hostname=%s" % (app.deploy_name,
                                                    self.get_openshift_app_host(app, env))
         print("...Creating app route for %s : %s" % (app.deploy_name, cmd))
@@ -198,18 +198,18 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             the host url of the app
         """
-        return "%s-%s.%s" % (app.deploy_name, self.get_openshift_area_name(env), env.deploy_host)
+        return "%s-%s.%s" % (app.deploy_name, self.get_openshift_area_name(app), env.deploy_host)
 
-    def configure_project(self, env):
+    def configure_project(self, app):
         """
         Configure the openshift project where the app will be deployed.
         Creates the project and the secret for the scm if they doesn't exist
 
         Args:
-            env (Environment): Environment object
+            app (App): App object
 
         """
-        project = self.get_openshift_area_name(env)
+        project = self.get_openshift_area_name(app)
         self.create_project_if_does_not_exist(project)
         self.create_secret_if_does_not_exist(project)
 
@@ -388,7 +388,7 @@ class OpenshiftProvider(AbstractProvider):
                                    for k, v in sorted(env_vars.items()))
         return env_vars_as_str
 
-    def get_openshift_area_name(self, env):
+    def get_openshift_area_name(self, app):
         """
         Returns the current openshift project name.
         By now the project name will be the env.name. In sgslebs/ndeploy the project
@@ -400,7 +400,7 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             the current openshift project name
         """
-        return env.name
+        return app.group
         # sgslebs/ndeploy implementation
         # default = getpass.getuser()
         # return options.get("area", default).replace(".", "")
