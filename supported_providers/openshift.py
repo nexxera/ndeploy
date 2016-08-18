@@ -53,6 +53,19 @@ class OpenshiftProvider(AbstractProvider):
 
         self.openshift_deploy(app, env, self.create_app_by_source)
 
+    def undeploy(self, app, environment):
+        """
+        Args:
+            app:
+            environment:
+
+        Returns:
+
+        """
+        project = self.get_openshift_area_name(environment)
+        self.openshift_exec("delete all -l app={app_name}"
+                            .format(app_name=app.deploy_name), project)
+
     def openshift_deploy(self, app, env, create_app_callback):
         """
         Do all the flow needed to deploy an app on openshift.

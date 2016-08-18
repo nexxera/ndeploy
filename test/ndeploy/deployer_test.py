@@ -36,14 +36,16 @@ class DeployerTest(unittest.TestCase):
         self._assert_deploy_call("my-app", "super-app", "dev", "dev.nexxera.com", "dokku")
 
     def _configure_env(self, name, host, _type, url):
-        self.env_repo.has_environment.side_effect = lambda e: e == _type
-        self.env_repo.load_environment.side_effect = lambda e: Environment(_type, name, host, url) if e == _type else None
+        self.env_repo.has_environment.side_effect = \
+            lambda n: n == name
+        self.env_repo.load_environment.side_effect = \
+            lambda n: Environment(_type, name, host, url) if n == name else None
 
     def test_deploy_with_file_and_registered_env(self):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
         self._configure_env("qa", "qa.nexxera.com", "openshift", None)
 
-        self.deployer.deploy(file=local_file, environment="openshift")
+        self.deployer.deploy(file=local_file, environment="qa")
 
         self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexxera.com", "openshift")
 
@@ -57,7 +59,7 @@ class DeployerTest(unittest.TestCase):
         self._configure_env("qa", "qa.nexxera.com", "openshift",
                             "git@git.nexxera.com:environment-conf-qa/{group}.git master {name}.json")
         self.deployer.deploy(group="financial-platform", name="financial-platform-core",
-                             environment="openshift")
+                             environment="qa")
 
         self._assert_deploy_call("app", "financial", "qa", "qa.nexxera.com", "openshift")
 
@@ -68,7 +70,27 @@ class DeployerTest(unittest.TestCase):
             self._configure_env("qa", "qa.nexxera.com", "openshift",
                                 "git@git.nexxera.com:environment-conf-qa/{group}.git")
             self.deployer.deploy(group="financial-platform", name="financial-platform-core",
-                                 environment="openshift")
+                                 environment="qa")
+
+    def test_undeploy_from_invalid_env_should_fail(self):
+        self.env_repo.has_environment.side_effect = lambda e: e != "invalid"
+        with self.assertRaises(InvalidArgumentError):
+            self.deployer.undeploy("app", "group", "invalid")
+
+    def test_undeploy_should_call_correct_provider_to_undeploy(self):
+        self._configure_env("qa", "qa.nexxera.com", "openshift", None)
+        self.deployer.undeploy("app", "group", "qa")
+        self._assert_undeploy_call("app", "app", "qa", "qa.nexxera.com", "openshift")
+
+    def _assert_undeploy_call(self, expected_app_name, expected_app_deploy_name,
+                              expected_env_name, expected_env_deploy_host, expected_env_type):
+        self.provider_repo.get_provider_for.assert_called_with(expected_env_type)
+        self.assertEqual(1, self.mocked_provider.undeploy.call_count)
+
+        app_called = self.mocked_provider.undeploy.call_args[0][0]
+        env_called = self.mocked_provider.undeploy.call_args[0][1]
+        self._assertApp(expected_app_name, expected_app_deploy_name, app_called)
+        self._assertEnv(expected_env_name, expected_env_deploy_host, expected_env_type, env_called)
 
     def _assert_deploy_call(self, expected_app_name, expected_app_deploy_name,
                             expected_env_name, expected_env_deploy_host, expected_env_type):

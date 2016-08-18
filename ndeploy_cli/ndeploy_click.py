@@ -79,6 +79,14 @@ def deploy(**kwargs):
                         name=kwargs['name'],
                         environment=kwargs['environment'])
 
+@ndeploy.command()
+@click.option('-g', '--group', help="Group name of project.", prompt="App group")
+@click.option('-n', '--name', help="Name project.", prompt="App name")
+@click.option('-e', '--environment', help="Environment configured.", prompt="Environment name")
+def undeploy(**kwargs):
+    ndeploy_core.undeploy(group=kwargs['group'],
+                          name=kwargs['name'],
+                          environment=kwargs['environment'])
 
 if __name__ == '__main__':
     ndeploy()

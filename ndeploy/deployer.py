@@ -44,13 +44,51 @@ class Deployer:
             with open(file) as json_data:
                 app_data = json.load(json_data)
 
-        env = self._resolve_environment(app_data, environment)
+        env, app, provider = \
+            self._resolve_app_env_and_provider(environment, group, name, app_data)
+
+        provider.deploy(app, env)
+
+    def undeploy(self, name, group, environment):
+        """
+        Undeploys the app with `name` and `group` from `environment`
+
+        Args:
+            name (str): the app name
+            group (str): the app group name
+            environment (str): the environment name
+
+        """
+        env, app, provider = \
+            self._resolve_app_env_and_provider(environment, group, name,
+                                               {"name": name})
+
+        provider.undeploy(app, env)
+
+    def _resolve_app_env_and_provider(self, env_name, group, app_name, app_data=None):
+        """
+        Resolves the app, env and provider object for this deploy/undeploy session
+
+        Args:
+            env_name (str): environment name
+            group (str): app group name
+            app_name (str): app name
+            app_data (dict): dict containing app data from existing file (optional)
+
+        Returns:
+            Tuple containing (Environment, App, AbstractProvider)
+
+        """
+        env = self._resolve_environment(app_data, env_name)
         assert env is not None
 
-        app = self._resolve_app(app_data, group, name, env)
+        app = self._resolve_app(app_data, group, app_name, env)
         assert app is not None
 
-        self.provider_repository.get_provider_for(env.type).deploy(app, env)
+        provider = self.provider_repository.get_provider_for(env.type)
+        assert provider is not None
+
+        return env, app, provider
 
     def _get_remote_conf(self, repo_url, branch, file_relative_path, rsa_path):
         """

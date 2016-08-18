@@ -24,6 +24,9 @@ class MockProvider(AbstractProvider):
     def app_url(self, name):
         return "http://%s.com" % (name)
 
+    def undeploy(self, app, environment):
+        pass
+
     @service("postgres")
     def load_postgres(self, resource):
         return "postgres://user:senha@localhost:5432/%s" % (resource)

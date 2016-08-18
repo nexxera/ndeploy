@@ -79,6 +79,8 @@ class Environment:
             Tuple containing (repo_url, branch, file_relative_path)
 
         """
+        assert self.app_deployment_file_url is not None, \
+            "trying to format a None app_deployment_file_url"
         self.check_is_valid()
         repo_info = self.app_deployment_file_url.split()
         return repo_info[0].format(group=group), repo_info[1], repo_info[2].format(name=name)

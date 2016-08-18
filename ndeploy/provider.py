@@ -100,6 +100,17 @@ class AbstractProvider:
         else:
             self.deploy_by_git_push(app, environment)
 
+    @abstractmethod
+    def undeploy(self, app, environment):
+        """
+
+        Args:
+            app (App): App object
+            environment (Environment): Environment object
+
+        """
+        pass
+
     def _resolve_env_vars(self, env_vars):
         """
         Faz a resolução dos valores para cada variável.
