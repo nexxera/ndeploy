@@ -95,4 +95,15 @@ class NDeployCore:
         """
         self.deployer.deploy(file, group, name, environment)
 
+    def undeploy(self, name, group, environment):
+        """
+        Undeploys the app with `name` and `group` of the environment
+
+        Args:
+            name (str): the app name
+            group (str): the app group name
+            environment (str): the environment name
+
+        """
+        self.deployer.undeploy(name, group, environment)
 

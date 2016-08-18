@@ -95,6 +95,12 @@ class OpenShiftTest(unittest.TestCase):
         with self.assertRaises(OpenShiftNameTooLongError):
             self._deploy(App("myapp", deploy_name="pneumoultramicroscopicossilicovulcanoconiótico",
                          image="image", env_vars={}))
+
+    def test_undeploy_should_call_delete(self):
+        self._undeploy()
+        self.openshift.openshift_exec.assert_any_call(
+            "delete all -l app=myapp", "dev")
+
     # helpers
 
     def _deploy_by_image(self, env_vars={}):
@@ -104,6 +110,10 @@ class OpenShiftTest(unittest.TestCase):
     def _deploy_by_source(self, env_vars={}):
         app = App("myapp", repository="git@git.nexxera.com/myapp", env_vars=env_vars)
         self._deploy(app)
+
+    def _undeploy(self):
+        self.openshift.undeploy(App(name="myapp"),
+                                Environment("openshift", "dev", "dev.com"))
 
     def _deploy(self, app):
         env = Environment("openshift", "dev", "dev.com")
