@@ -61,7 +61,7 @@ class Deployer:
         """
         env, app, provider = \
             self._resolve_app_env_and_provider(environment, group, name,
-                                               {"name": name})
+                                               {"name": name, "group": group})
 
         provider.undeploy(app, env)
 

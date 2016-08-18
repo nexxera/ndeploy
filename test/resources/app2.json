@@ -1,5 +1,6 @@
 {
   "name": "hello6",
+  "group": "my-group",
   "deploy_name": "hello-world",
   "image": "gitlab-dreg.nexxera.com/isaac.souza/hello-world-ci-python:develop-integrated",
   "repository": "python:3.5~git@gitlab.nexxera.com:isaac.souza/hello-world-ci-python.git",

@@ -20,30 +20,30 @@ class OpenShiftTest(unittest.TestCase):
             self._deploy_by_image()
 
     def test_should_create_project_if_does_not_exist(self):
-        self._configure_project_exist("dev", False)
-        self._configure_secret_exist("scmsecret", "dev", True)
+        self._configure_project_exist("mygroup", False)
+        self._configure_secret_exist("scmsecret", "mygroup", True)
         self._deploy_by_image()
-        self.openshift.openshift_exec.assert_any_call("new-project dev", "")
+        self.openshift.openshift_exec.assert_any_call("new-project mygroup", "")
 
     def test_should_not_create_project_if_exist(self):
-        self._configure_project_exist("dev", True)
-        self._configure_secret_exist("scmsecret", "dev", True)
+        self._configure_project_exist("mygroup", True)
+        self._configure_secret_exist("scmsecret", "mygroup", True)
         self.openshift.create_project = MagicMock()
         self._deploy_by_image()
         self.assertEqual(0, self.openshift.create_project.call_count)
 
     def test_should_create_secret_if_does_not_exist(self):
-        self._configure_project_exist("dev", True)
-        self._configure_secret_exist("scmsecret", "dev", False)
+        self._configure_project_exist("mygroup", True)
+        self._configure_secret_exist("scmsecret", "mygroup", False)
         self._deploy_by_image()
         self.shell_exec.execute_system.assert_any_call(
-            "oc secrets new scmsecret ssh-privatekey=$HOME/.ssh/id_rsa -n dev")
+            "oc secrets new scmsecret ssh-privatekey=$HOME/.ssh/id_rsa -n mygroup")
         self.openshift.openshift_exec.assert_any_call(
-            "secrets add serviceaccount/builder secrets/scmsecret", "dev")
+            "secrets add serviceaccount/builder secrets/scmsecret", "mygroup")
 
     def test_should_not_create_secret_if_exist(self):
-        self._configure_project_exist("dev", True)
-        self._configure_secret_exist("scmsecret", "dev", True)
+        self._configure_project_exist("mygroup", True)
+        self._configure_secret_exist("scmsecret", "mygroup", True)
         self.openshift.create_secret = MagicMock()
         self._deploy_by_image()
         self.assertEqual(0, self.openshift.create_secret.call_count)
@@ -51,28 +51,28 @@ class OpenShiftTest(unittest.TestCase):
     def test_deploy_by_image(self):
         self._deploy_by_image()
         self.openshift.openshift_exec.assert_any_call(
-            "new-app image1.dev.nexxera.com --name myapp", "dev")
+            "new-app image1.dev.nexxera.com --name myapp", "mygroup")
         self.openshift.openshift_exec.assert_any_call(
-            "env dc/myapp ", "dev")
+            "env dc/myapp ", "mygroup")
 
     def test_deploy_by_source(self):
         self._deploy_by_source()
         self.openshift.openshift_exec.assert_any_call(
-            "new-app git@git.nexxera.com/myapp --name myapp", "dev")
+            "new-app git@git.nexxera.com/myapp --name myapp", "mygroup")
         self.shell_exec.execute_system.assert_any_call(
-            "oc patch bc myapp -p '{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}' -n dev")
+            "oc patch bc myapp -p '{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}' -n mygroup")
 
     def test_should_expose_service_if_does_not_exist(self):
-        self._configure_route_exist("myapp", "dev", False)
+        self._configure_route_exist("myapp", "mygroup", False)
         self._deploy_by_source()
         self.openshift.openshift_exec.assert_any_call(
-            "expose service/myapp --hostname=myapp-dev.dev.com", "dev")
+            "expose service/myapp --hostname=myapp-mygroup.dev.com", "mygroup")
         self.openshift.openshift_exec.assert_any_call(
             """patch route myapp -p '{"spec": {"tls": {"termination": "edge", "insecureEdgeTerminationPolicy": "Redirect"}}}'"""
-            , "dev")
+            , "mygroup")
 
     def test_should_not_expose_service_if_exist(self):
-        self._configure_route_exist("myapp", "dev", True)
+        self._configure_route_exist("myapp", "mygroup", True)
         self.openshift.create_route = MagicMock()
         self._deploy_by_source()
         self.assertEqual(0, self.openshift.create_route.call_count)
@@ -80,39 +80,39 @@ class OpenShiftTest(unittest.TestCase):
     def test_env_vars_should_be_injected_into_container_when_deploy_by_image(self):
         self._deploy_by_image({"MY_VAR": "Ola amigo", "DUMMY": "156546"})
         self.openshift.openshift_exec.assert_any_call(
-            'new-app image1.dev.nexxera.com --name myapp', "dev")
+            'new-app image1.dev.nexxera.com --name myapp', "mygroup")
         self.openshift.openshift_exec.assert_any_call(
-            "env dc/myapp DUMMY=\"156546\" MY_VAR=\"Ola amigo\"", "dev")
+            "env dc/myapp DUMMY=\"156546\" MY_VAR=\"Ola amigo\"", "mygroup")
 
     def test_env_vars_should_be_injected_into_container_when_deploy_by_source(self):
         self._deploy_by_source({"MY_VAR": "Ola amigo", "DUMMY": "156546"})
         self.openshift.openshift_exec.assert_any_call(
-            'new-app git@git.nexxera.com/myapp --name myapp', "dev")
+            'new-app git@git.nexxera.com/myapp --name myapp', "mygroup")
         self.openshift.openshift_exec.assert_any_call(
-            "env dc/myapp DUMMY=\"156546\" MY_VAR=\"Ola amigo\"", "dev")
+            "env dc/myapp DUMMY=\"156546\" MY_VAR=\"Ola amigo\"", "mygroup")
 
     def test_app_with_long_deploy_name_should_raise_exception(self):
         with self.assertRaises(OpenShiftNameTooLongError):
-            self._deploy(App("myapp", deploy_name="pneumoultramicroscopicossilicovulcanoconiótico",
+            self._deploy(App("myapp", "mygroup", deploy_name="pneumoultramicroscopicossilicovulcanoconiótico",
                          image="image", env_vars={}))
 
     def test_undeploy_should_call_delete(self):
         self._undeploy()
         self.openshift.openshift_exec.assert_any_call(
-            "delete all -l app=myapp", "dev")
+            "delete all -l app=myapp", "mygroup")
 
     # helpers
 
     def _deploy_by_image(self, env_vars={}):
-        app = App("myapp", image="image1.dev.nexxera.com", env_vars=env_vars)
+        app = App("myapp", "mygroup", image="image1.dev.nexxera.com", env_vars=env_vars)
         self._deploy(app)
 
     def _deploy_by_source(self, env_vars={}):
-        app = App("myapp", repository="git@git.nexxera.com/myapp", env_vars=env_vars)
+        app = App("myapp", "mygroup", repository="git@git.nexxera.com/myapp", env_vars=env_vars)
         self._deploy(app)
 
     def _undeploy(self):
-        self.openshift.undeploy(App(name="myapp"),
+        self.openshift.undeploy(App("myapp", "mygroup"),
                                 Environment("openshift", "dev", "dev.com"))
 
     def _deploy(self, app):

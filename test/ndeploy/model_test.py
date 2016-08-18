@@ -21,6 +21,7 @@ class AssembleModelTest(unittest.TestCase):
         app = App(**data)
 
         app_expected = App(name="my-app",
+                           group="my-group",
                            deploy_name="super-app",
                            repository="git@gitlab.nexxera.com:group/my-app.git",
                            image="gitlab-dreg.nexxera.com/group/my-app",
@@ -45,15 +46,16 @@ class AssembleModelTest(unittest.TestCase):
         self.assertEqual(environment.__dict__, environment_expected.__dict__)
 
     def test_create_empty_app(self):
-        app = App("name")
+        app = App("name", "group")
         self.assertEquals("name", app.name)
+        self.assertEquals("group", app.group)
         self.assertEquals("name", app.deploy_name)
         self.assertEquals("", app.image)
         self.assertEquals("", app.repository)
         self.assertEquals({}, app.env_vars)
 
     def test_app_without_deploy_name_use_name(self):
-        app = App("name")
+        app = App("name", "group")
         self.assertEqual("name", app.deploy_name)
 
     def test_wrong_app_deployment_file_url(self):

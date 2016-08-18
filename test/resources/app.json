@@ -1,5 +1,6 @@
 {
   "name": "my-app",
+  "group": "my-group",
   "deploy_name": "super-app",
   "repository": "git@gitlab.nexxera.com:group/my-app.git",
   "image": "gitlab-dreg.nexxera.com/group/my-app",
