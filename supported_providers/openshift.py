@@ -55,11 +55,11 @@ class OpenshiftProvider(AbstractProvider):
 
     def undeploy(self, app, environment):
         """
-        Args:
-            app:
-            environment:
+        Undeploys the app in the environment.
 
-        Returns:
+        Args:
+            app (App): app object
+            environment (Environment): environment object
 
         """
         project = self.get_openshift_area_name(app)
@@ -302,6 +302,16 @@ class OpenshiftProvider(AbstractProvider):
                                         .format(app_name=app.deploy_name), project)
 
     def create_app(self, app, project, by_image):
+        """
+        Creates an app on openshift `project`
+
+        Args:
+            app (App): the app to create
+            project (str): the project name
+            by_image (bool): True if the app will create by image,
+                False if by source
+
+        """
         if by_image:
             self.openshift_exec("new-app {image_url} --name {app_name}"
                                 .format(image_url=app.image,
@@ -312,6 +322,15 @@ class OpenshiftProvider(AbstractProvider):
                                         app_name=app.deploy_name), project)
 
     def create_app_if_does_not_exist(self, app, project, by_image):
+        """
+        Creates an app on openshift if it does not exist
+        Args:
+            app (App): the app to create
+            project (str): the project name
+            by_image (bool): True if needs to create by image,
+                False if source
+
+        """
         if not self.app_exist(app, project):
             self.create_app(app, project, by_image)
         else:
@@ -428,10 +447,10 @@ class OpenshiftProvider(AbstractProvider):
 
     def prepare_env_vars(self, env_vars):
         """
-        Format the env_vars dict as a string with the format below:
+        Format the env_vars dict as a string with the following format:
 
-            self.prepare_env_vars({ "ENV1": "value1", "ENV2": "value2" })
-                -> ENV1=value1 ENV2=value2
+            $ self.prepare_env_vars({ "ENV1": "value1", "ENV2": "value2" })
+            $ ENV1=value1 ENV2=value2
 
         Args:
             env_vars (dict): dict containing environment keys and values
@@ -440,7 +459,7 @@ class OpenshiftProvider(AbstractProvider):
             str containing the formatted values
 
         """
-        env_vars_as_str = ' '.join('{}="{}"'.format(k, v) \
+        env_vars_as_str = ' '.join('{}="{}"'.format(k, v)
                                    for k, v in sorted(env_vars.items()))
         return env_vars_as_str
 
