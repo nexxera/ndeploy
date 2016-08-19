@@ -1,9 +1,10 @@
 import json
 import shutil
 import os.path
+from ndeploy.shell_exec import ShellExec
 from ndeploy.model import App, Environment
 from ndeploy.exception import InvalidArgumentError, \
-    AppConfigFileCloneError, BadFormedRemoteConfigUrlError
+    AppConfigFileCloneError
 
 
 class Deployer:
@@ -112,17 +113,19 @@ class Deployer:
 
         os.makedirs(local_folder)
 
-        print("getting config file from " + repo_url)
+        print("...Getting remote app config file from " + repo_url)
 
-        os.system("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
-                  "{branch} {file_relative_path} | tar -x -C {local_folder}'"
-                  .format(rsa_path=rsa_path, repo_url=repo_url,
-                          branch=branch, local_folder=local_folder,
-                          file_relative_path=file_relative_path))
+        ShellExec.execute_program("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
+                                  "{branch} {file_relative_path} | tar -x -C {local_folder}'"
+                                  .format(rsa_path=rsa_path, repo_url=repo_url,
+                                          branch=branch, local_folder=local_folder,
+                                          file_relative_path=file_relative_path), True)
 
         cloned_file = os.path.join(local_folder, file_relative_path)
         if not os.path.isfile(cloned_file):
             raise AppConfigFileCloneError(repo_url, cloned_file)
+        else:
+            print("...Successfully downloaded remote app config file")
 
         with open(cloned_file) as json_data:
             app_data = json.load(json_data)

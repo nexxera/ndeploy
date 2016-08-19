@@ -90,9 +90,8 @@ class OpenshiftProvider(AbstractProvider):
         Args:
             app: App to be deployed
         """
-        print("Deploying app by image: {app_name}, image: {image}"
-              "\nVars: {env_vars}".format(app_name=app.deploy_name,
-                                          image=app.image, env_vars=app.env_vars))
+        print("...Deploying app {app_name} by image\n...Image url: {image}"
+              .format(app_name=app.deploy_name, image=app.image))
 
         project = self.get_openshift_area_name(app)
         self.create_app_if_does_not_exist(app, project, True)
@@ -128,10 +127,12 @@ class OpenshiftProvider(AbstractProvider):
             project (str): project where app is deployed
 
         """
-        print("setting env")
+        print("...Configuring environment variables")
+        env_vars = self.prepare_env_vars(app.env_vars)
+        print("...{}".format(env_vars))
         self.openshift_exec("env dc/{app_name} {env_vars}"
                             .format(app_name=app.deploy_name,
-                                    env_vars=self.prepare_env_vars(app.env_vars)),
+                                    env_vars=env_vars),
                             project)
 
     def create_app_by_source(self, app):
@@ -142,7 +143,8 @@ class OpenshiftProvider(AbstractProvider):
             app (App): app to be deployed
 
         """
-        print("Deploying app by source: %s, group: repository: %s" % (app.name, app.repository))
+        print("...Deploying app {app_name} by source\nRepository: {repo}"
+              .format(app_name=app.deploy_name, repo=app.repository))
 
         project = self.get_openshift_area_name(app)
         self.create_app_if_does_not_exist(app, project, False)
@@ -169,10 +171,12 @@ class OpenshiftProvider(AbstractProvider):
         Verifies if the oc client is logged. Raise OpenShiftNotLoggedError
         if not logged
         """
+        print("...Verifying if oc client is logged......", end="")
         if not self.is_logged():
             # raising exception for now. We need to think in a better solution for this
             raise OpenShiftNotLoggedError
             # self.login(env)
+        print("...Ok")
 
     def expose_service(self, app, env):
         """
@@ -186,10 +190,13 @@ class OpenshiftProvider(AbstractProvider):
         route_name = app.deploy_name
         project = self.get_openshift_area_name(app)
 
+        print("...Verifying if route {} exists.........".format(route_name), end="")
         if not self.route_exist(route_name, project):
+            print("No, will create.......", end="")
             self.create_route(app, env)
+            print("Ok")
         else:
-            print("Route {} already exists. Using it.".format(route_name))
+            print("Ok")
 
     def create_route(self, app, env):
         """
@@ -252,10 +259,13 @@ class OpenshiftProvider(AbstractProvider):
         Args:
             project: the project name
         """
+        print("...Verifying if project {} exists.........".format(project), end="")
         if not self.project_exist(project):
+            print("No, creating project.........", end="")
             self.create_project(project)
+            print("Ok")
         else:
-            print("...Project {} already exists. Using it.".format(project))
+            print("Ok")
 
     def create_secret(self, project):
         """
@@ -280,10 +290,13 @@ class OpenshiftProvider(AbstractProvider):
         Args:
             project: the project name
         """
+        print("...Verifying if secret scmsecret exists.........", end="")
         if not self.secret_exist("scmsecret", project):
+            print("No, will create........", end="")
             self.create_secret(project)
+            print("Ok")
         else:
-            print("...Secret {} already exists. Using it.".format("scmsecret"))
+            print("Ok")
 
     def app_exist(self, app, project):
         """
@@ -331,10 +344,14 @@ class OpenshiftProvider(AbstractProvider):
                 False if source
 
         """
+        print("...Verifying if app {} exists........."
+              .format(app.deploy_name), end="")
         if not self.app_exist(app, project):
+            print("No, will create..........", end="")
             self.create_app(app, project, by_image)
+            print("Ok")
         else:
-            print("...App already exist. Using it.")
+            print("Ok")
 
     def project_exist(self, project):
         """
@@ -399,8 +416,9 @@ class OpenshiftProvider(AbstractProvider):
 
         """
         return self.shell_exec.execute_program("oc {cmd} {project}"
-                                               .format(cmd=oc_cmd,
-                                                       project="-n " + project_name if project_name != "" else ""))
+            .format(cmd=oc_cmd,
+                    project="-n " + project_name if project_name != "" else "")
+                                                , True)
 
     def oc_return_error(self, cmd, project_name):
         """
@@ -424,7 +442,7 @@ class OpenshiftProvider(AbstractProvider):
         """
         cmd = "oc whoami"
         try:
-            err, out = self.shell_exec.execute_program_with_timeout(cmd)
+            err, out = self.shell_exec.execute_program_with_timeout(cmd, True)
             if "system:anonymous" in err or "provide credentials" in err:
                 return False
             else:
@@ -481,8 +499,10 @@ class OpenshiftProvider(AbstractProvider):
         # return options.get("area", default).replace(".", "")
 
     def validate_deploy_name(self, app):
+        print("...Validating deploy name.........", end="")
         if len(app.deploy_name) > 24:
             raise OpenShiftNameTooLongError(app.deploy_name)
+        print("Ok")
 
     def get_app_deploy_revision(self, app, project):
         err, out = self.openshift_exec("get dc/{app_name}"
