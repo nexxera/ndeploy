@@ -23,7 +23,7 @@ class OpenShiftNameTooLongError(NDeployError):
 
 class OpenshiftProvider(AbstractProvider):
     """
-    Implementação dos métodos para deploy no openshift.
+    Openshift deployment implementation
     """
 
     __type__ = 'openshift'
@@ -83,30 +83,56 @@ class OpenshiftProvider(AbstractProvider):
         create_app_callback(app)
         self.expose_service(app, env)
 
-    def validate_deploy_name(self, app):
-        if len(app.deploy_name) > 24:
-            raise OpenShiftNameTooLongError(app.deploy_name)
-
     def create_app_by_image(self, app):
         """
         Creates the app in the environment by image
 
         Args:
             app: App to be deployed
-            env: Environment object
         """
-        print(app.env_vars)
-        print("Deploying app by image: %s, image: %s" % (app.deploy_name, app.image))
+        print("Deploying app by image: {app_name}, image: {image}"
+              "\nVars: {env_vars}".format(app_name=app.deploy_name,
+                                          image=app.image, env_vars=app.env_vars))
 
         project = self.get_openshift_area_name(app)
-        self.openshift_exec("new-app {image_url} --name {app_name}"
-                            .format(image_url=app.image,
-                                    app_name=app.deploy_name), project)
+        self.create_app_if_does_not_exist(app, project, True)
 
-        # this triggers another deployment
+        current_revision = self.get_app_deploy_revision(app, project)
+
+        # this may trigger another deployment if some var has changed
+        self.update_env_vars(app, project)
+
+        # last chance to trigger a new deployment..
+        # if new-app and env dc didn't triggered we need to force a new
+        # deploy to handle a possible image change
+        if current_revision == self.get_app_deploy_revision(app, project):
+            self.force_deploy(app, project)
+
+    def force_deploy(self, app, project):
+        """
+        Forces a new deploy on openshift
+        Args:
+            app (App): App object
+            project (str): project where app will be deployed
+
+        """
+        print("...Nothing changes, forcing a new deploy")
+        self.openshift_exec("deploy {app_name} --latest"
+                            .format(app_name=app.deploy_name), project)
+
+    def update_env_vars(self, app, project):
+        """
+        Updates the environments variables for the app in the project
+        Args:
+            app (App): App object
+            project (str): project where app is deployed
+
+        """
+        print("setting env")
         self.openshift_exec("env dc/{app_name} {env_vars}"
                             .format(app_name=app.deploy_name,
-                                    env_vars=self.prepare_env_vars(app.env_vars)), project)
+                                    env_vars=self.prepare_env_vars(app.env_vars)),
+                            project)
 
     def create_app_by_source(self, app):
         """
@@ -114,14 +140,12 @@ class OpenshiftProvider(AbstractProvider):
 
         Args:
             app (App): app to be deployed
-            env (Environment): environment object
+
         """
         print("Deploying app by source: %s, group: repository: %s" % (app.name, app.repository))
 
         project = self.get_openshift_area_name(app)
-        self.openshift_exec("new-app {source_repo} --name {app_name}"
-                            .format(source_repo=app.repository,
-                                    app_name=app.deploy_name), project)
+        self.create_app_if_does_not_exist(app, project, False)
 
         self.shell_exec.execute_system(
             "oc patch bc %s -p "
@@ -260,6 +284,38 @@ class OpenshiftProvider(AbstractProvider):
             self.create_secret(project)
         else:
             print("...Secret {} already exists. Using it.".format("scmsecret"))
+
+    def app_exist(self, app, project):
+        """
+        Verifies if app exist.
+        We are verifying only if a deployment config exists.
+
+        Args:
+            app (App): App object
+            project (str): the openshift project where the should exist
+
+        Returns:
+            True if exists, False otherwise
+
+        """
+        return not self.oc_return_error("get dc/{app_name}"
+                                        .format(app_name=app.deploy_name), project)
+
+    def create_app(self, app, project, by_image):
+        if by_image:
+            self.openshift_exec("new-app {image_url} --name {app_name}"
+                                .format(image_url=app.image,
+                                        app_name=app.deploy_name), project)
+        else:
+            self.openshift_exec("new-app {source_repo} --name {app_name}"
+                                .format(source_repo=app.repository,
+                                        app_name=app.deploy_name), project)
+
+    def create_app_if_does_not_exist(self, app, project, by_image):
+        if not self.app_exist(app, project):
+            self.create_app(app, project, by_image)
+        else:
+            print("...App already exist. Using it.")
 
     def project_exist(self, project):
         """
@@ -404,3 +460,24 @@ class OpenshiftProvider(AbstractProvider):
         # sgslebs/ndeploy implementation
         # default = getpass.getuser()
         # return options.get("area", default).replace(".", "")
+
+    def validate_deploy_name(self, app):
+        if len(app.deploy_name) > 24:
+            raise OpenShiftNameTooLongError(app.deploy_name)
+
+    def get_app_deploy_revision(self, app, project):
+        err, out = self.openshift_exec("get dc/{app_name}"
+                                       .format(app_name=app.deploy_name), project)
+
+        if err:
+            return 0
+
+        # need to found a better way to handle that
+        # for now we are parsing the output of get dc
+        lines = out.split("\n")
+        assert len(lines) == 2, \
+            "Could not parse get dc output. Maybe it is an api change"
+        columns = lines[1].split()
+        assert len(columns) == 4, \
+            "Could not parse get dc output. Maybe it is an api change"
+        return columns[1]
