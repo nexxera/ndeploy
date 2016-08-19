@@ -13,6 +13,7 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.set_shell_exec(self.shell_exec)
         self._configure_is_logged(True)
         self._configure_openshift_exec()
+        self._configure_get_deploy_revision([0, 1])
 
     def test_should_raise_exception_if_user_is_not_logged(self):
         with self.assertRaises(expected_exception=OpenShiftNotLoggedError):
@@ -49,6 +50,7 @@ class OpenShiftTest(unittest.TestCase):
         self.assertEqual(0, self.openshift.create_secret.call_count)
 
     def test_deploy_by_image(self):
+        self._configure_app_exist("myapp", "mygroup", False)
         self._deploy_by_image()
         self.openshift.openshift_exec.assert_any_call(
             "new-app image1.dev.nexxera.com --name myapp", "mygroup")
@@ -56,6 +58,7 @@ class OpenShiftTest(unittest.TestCase):
             "env dc/myapp ", "mygroup")
 
     def test_deploy_by_source(self):
+        self._configure_app_exist("myapp", "mygroup", False)
         self._deploy_by_source()
         self.openshift.openshift_exec.assert_any_call(
             "new-app git@git.nexxera.com/myapp --name myapp", "mygroup")
@@ -78,6 +81,7 @@ class OpenShiftTest(unittest.TestCase):
         self.assertEqual(0, self.openshift.create_route.call_count)
 
     def test_env_vars_should_be_injected_into_container_when_deploy_by_image(self):
+        self._configure_app_exist("myapp", "mygroup", False)
         self._deploy_by_image({"MY_VAR": "Ola amigo", "DUMMY": "156546"})
         self.openshift.openshift_exec.assert_any_call(
             'new-app image1.dev.nexxera.com --name myapp', "mygroup")
@@ -85,6 +89,7 @@ class OpenShiftTest(unittest.TestCase):
             "env dc/myapp DUMMY=\"156546\" MY_VAR=\"Ola amigo\"", "mygroup")
 
     def test_env_vars_should_be_injected_into_container_when_deploy_by_source(self):
+        self._configure_app_exist("myapp", "mygroup", False)
         self._deploy_by_source({"MY_VAR": "Ola amigo", "DUMMY": "156546"})
         self.openshift.openshift_exec.assert_any_call(
             'new-app git@git.nexxera.com/myapp --name myapp', "mygroup")
@@ -100,6 +105,19 @@ class OpenShiftTest(unittest.TestCase):
         self._undeploy()
         self.openshift.openshift_exec.assert_any_call(
             "delete all -l app=myapp", "mygroup")
+
+    def test_should_not_create_app_if_app_already_exists(self):
+        self._configure_app_exist("myapp", "mygroup", True)
+        self.openshift.create_app = MagicMock()
+        self._deploy_by_image()
+        self.openshift.create_app.assert_not_called()
+
+    def test_should_force_deploy_if_nothing_changes(self):
+        self._configure_app_exist("myapp", "mygroup", True)
+        self._configure_get_deploy_revision([1, 1])
+        self._deploy_by_image()
+        self.openshift.openshift_exec.assert_any_call(
+            "deploy myapp --latest", "mygroup")
 
     # helpers
 
@@ -130,7 +148,16 @@ class OpenShiftTest(unittest.TestCase):
             side_effect=lambda s, p: exist if s == secret and p == project else False)
 
     def _configure_route_exist(self, route, project, exist):
-        self.openshift.route_exist = MagicMock(side_effect=lambda r, p: exist if p == project and r == route else False)
+        self.openshift.route_exist = MagicMock(
+            side_effect=lambda r, p: exist if p == project and r == route else False)
+
+    def _configure_app_exist(self, app, project, exist):
+        self.openshift.app_exist = MagicMock(
+            side_effect=lambda a, p: exist if p == project and a.name == app else False)
+
+    def _configure_get_deploy_revision(self, revisions):
+        self.openshift.get_app_deploy_revision = MagicMock(
+            side_effect=revisions)
 
     def _configure_openshift_exec(self):
         self.openshift.openshift_exec = MagicMock(return_value=(None, ""))
