@@ -91,7 +91,10 @@ class AbstractProvider:
         """
         assert self.shell_exec # shell_exec should exist at this point
 
-        print("Selected PaaS: %s" % environment.type)
+        print("...Beginning deploy on %s" % environment.type)
+        print("Environment name: %s" % environment.name)
+        print("App name: %s" % app.name)
+        print("App deploy name: %s" % app.deploy_name)
         app.env_vars = self._resolve_env_vars(app.env_vars)
 
         # quando informado URL da imagem docker, essa tem prioridade de deploy.

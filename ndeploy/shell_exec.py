@@ -31,5 +31,5 @@ class ShellExec:
 
     @staticmethod
     @timeout_decorator.timeout(10)
-    def execute_program_with_timeout(cmd):
-        return ShellExec.execute_program(cmd)
+    def execute_program_with_timeout(cmd, silent=False):
+        return ShellExec.execute_program(cmd, silent)
