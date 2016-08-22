@@ -48,6 +48,7 @@ class AbstractProvider:
 
         Args:
             app: Objeto App com os dados que serão usados para o deploy.
+            env: Objecto Environment com os dados que serão usados para o deploy
 
         Returns:
 
@@ -79,37 +80,37 @@ class AbstractProvider:
         """
         pass
 
-    def deploy(self, app, environment):
+    def deploy(self, app, env):
         """
         Método invocado para realização do deploy da aplicação.
         Args:
             app: Objeto App com dados da aplicação a ser deployada.
-            environment: Environment no qual será feito o deploy.
+            env: Environment no qual será feito o deploy.
 
         Returns:
 
         """
         assert self.shell_exec # shell_exec should exist at this point
 
-        print("...Beginning deploy on %s" % environment.type)
-        print("Environment name: %s" % environment.name)
+        print("...Beginning deploy on %s" % env.type)
+        print("Environment name: %s" % env.name)
         print("App name: %s" % app.name)
         print("App deploy name: %s" % app.deploy_name)
         app.env_vars = self._resolve_env_vars(app.env_vars)
 
-        # quando informado URL da imagem docker, essa tem prioridade de deploy.
+        # by image has priority
         if app.image:
-            self.deploy_by_image(app, environment)
+            self.deploy_by_image(app, env)
         else:
-            self.deploy_by_git_push(app, environment)
+            self.deploy_by_git_push(app, env)
 
     @abstractmethod
-    def undeploy(self, app, environment):
+    def undeploy(self, app, env):
         """
 
         Args:
             app (App): App object
-            environment (Environment): Environment object
+            env (Environment): Environment object
 
         """
         pass
