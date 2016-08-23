@@ -76,8 +76,11 @@ class OpenshiftProvider(AbstractProvider):
         self.app = app
         self.env = env
 
+        print("Undeploying app {app_name} from environment {env_name}"
+              .format(app_name=self.app.deploy_name, env_name=self.env.name))
         self.openshift_exec("delete all -l app={app_name}"
                             .format(app_name=app.deploy_name))
+        print("Undeploy done.")
 
     def openshift_deploy(self, create_app_callback):
         """

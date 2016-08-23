@@ -6,6 +6,8 @@ from ndeploy import environment_repository
 from ndeploy import deployer
 from ndeploy import provider
 from ndeploy.shell_exec import ShellExec
+from ndeploy.exception import NDeployError
+
 
 # dependencies resolution
 NDEPLOY_HOME = os.environ['HOME']+"/.ndeploy"
@@ -69,15 +71,21 @@ def keyenv(**kwargs):
 
 
 @ndeploy.command()
-@click.option('-f', '--file', help="App deployment file.")
-@click.option('-g', '--group', help="Group name of project.")
-@click.option('-n', '--name', help="Name project.")
-@click.option('-e', '--environment', help="Environment configured.")
+@click.option('-f', '--file', help="App deployment file")
+@click.option('-g', '--group', help="Group name of project")
+@click.option('-n', '--name', help="Project name")
+@click.option('-e', '--environment', help="Environment name")
 def deploy(**kwargs):
-    ndeploy_core.deploy(file=kwargs['file'],
-                        group=kwargs['group'],
-                        name=kwargs['name'],
-                        environment=kwargs['environment'])
+
+    try:
+        ndeploy_core.deploy(file=kwargs['file'],
+                            group=kwargs['group'],
+                            name=kwargs['name'],
+                            environment=kwargs['environment'])
+    except NDeployError as e:
+        print(e)
+
+
 
 @ndeploy.command()
 @click.option('-g', '--group', help="Group name of project.", prompt="App group")
