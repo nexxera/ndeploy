@@ -29,6 +29,17 @@ class DeployerTest(unittest.TestCase):
             self.deployer.deploy(file=os.path.join(os.path.dirname(__file__), '../resources', 'app.json'),
                                  environment="invalid")
 
+    def test_deploy_should_fail_if_file_group_and_name_is_not_passed(self):
+        with self.assertRaises(expected_exception=InvalidArgumentError):
+            self.deployer.deploy(environment="dev")
+
+    def test_deploy_should_fail_if_group_or_name_is_not_passed(self):
+        with self.assertRaises(expected_exception=InvalidArgumentError):
+            self.deployer.deploy(group="mygroup", environment="dev")
+
+        with self.assertRaises(expected_exception=InvalidArgumentError):
+            self.deployer.deploy(name="myapp", environment="dev")
+
     def test_deploy_should_accept_local_config_file_with_env(self):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_with_env.json')
 

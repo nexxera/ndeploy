@@ -39,6 +39,11 @@ class Deployer:
             name (str): app name
             environment (str): environment name where the app will be deployed
         """
+        if not file and (not group or not name):
+            raise InvalidArgumentError("Could not resolve the app json file. Either pass "
+                                       "the local file path with --file arg or remotely"
+                                       "using --group and --name args")
+
         app_data = None
 
         if file:
