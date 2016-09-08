@@ -94,8 +94,13 @@ class AbstractProvider:
 
         print("...Beginning deploy on %s" % env.type)
         print("Environment name: %s" % env.name)
+        print("Environment deploy host: %s" % env.deploy_host)
+        print("Environment app url file: %s" % env.app_deployment_file_url)
         print("App name: %s" % app.name)
         print("App deploy name: %s" % app.deploy_name)
+        print("App group: %s" % app.group)
+        print("App image: %s" % app.image)
+        print("App repository: %s" % app.repository)
         app.env_vars = self._resolve_env_vars(app.env_vars)
 
         # by image has priority
