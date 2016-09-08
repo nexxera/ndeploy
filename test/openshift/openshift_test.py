@@ -113,6 +113,24 @@ class OpenShiftTest(unittest.TestCase):
         self._deploy_by_image()
         self.openshift.create_app.assert_not_called()
 
+    def test_should_import_latest_image_if_image_url_tag_is_not_specified(self):
+        self._configure_app_exist("myapp", False)
+        self._deploy_by_image()
+        self.openshift.openshift_exec.assert_any_call(
+            "import-image myapp:latest")
+
+    def test_should_import_image_with_tag_specified_in_image_url(self):
+        self._configure_app_exist("myapp", False)
+        self._deploy_by_image(image="image1.dev.nexxera.com:release-candidate")
+        self.openshift.openshift_exec.assert_any_call(
+            "import-image myapp:release-candidate")
+
+    def test_should_import_image_if_app_does_not_exist(self):
+        self._configure_app_exist("myapp", False)
+        self._deploy_by_image()
+        self.openshift.openshift_exec.assert_any_call(
+            "import-image myapp:latest")
+
     def test_should_force_deploy_if_nothing_changes(self):
         self._configure_app_exist("myapp", True)
         self._configure_get_deploy_revision([1, 1])
@@ -122,8 +140,8 @@ class OpenShiftTest(unittest.TestCase):
 
     # helpers
 
-    def _deploy_by_image(self, env_vars={}):
-        app = App("myapp", "mygroup", image="image1.dev.nexxera.com", env_vars=env_vars)
+    def _deploy_by_image(self, env_vars={}, image=None):
+        app = App("myapp", "mygroup", image=image if image else "image1.dev.nexxera.com", env_vars=env_vars)
         self._deploy(app)
 
     def _deploy_by_source(self, env_vars={}):
