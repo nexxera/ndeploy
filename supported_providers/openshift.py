@@ -159,7 +159,6 @@ class OpenshiftProvider(AbstractProvider):
         """
         print("...Configuring environment variables")
         env_vars = self.prepare_env_vars(self.app.env_vars)
-        print("...{}".format(env_vars))
         self.openshift_exec("env dc/{app_name} {env_vars}"
                             .format(app_name=self.app.deploy_name,
                                     env_vars=env_vars))
