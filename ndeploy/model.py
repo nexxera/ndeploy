@@ -116,6 +116,8 @@ class App:
                 Each variable/value should be passed as the dict key/value
                 OS environment variables, services and app urls could be used
                 as described in `ndeploy.env_var_resolver.EnvVarResolver`
+            scripts (dict): dict containing scripts that will be executed
+                in deploy lifecycle (ex: predeploy or postdeploy)
         """
         self.name = name
         self.group = group
@@ -123,3 +125,4 @@ class App:
         self.repository = args["repository"] if "repository" in args else ""
         self.image = args["image"] if "image" in args else ""
         self.env_vars = args["env_vars"] if "env_vars" in args else {}
+        self.scripts = args["scripts"] if "scripts" in args else {}

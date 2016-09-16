@@ -25,6 +25,7 @@ class AssembleModelTest(unittest.TestCase):
                            deploy_name="super-app",
                            repository="git@gitlab.nexxera.com:group/my-app.git",
                            image="gitlab-dreg.nexxera.com/group/my-app",
+                           scripts=dict(predeploy="echo pre", postdeploy="echo post"),
                            env_vars=dict(APP_ENV="Development", EMAIL_HOST="smtp@domain.com"))
 
         self.assertEqual(app.__dict__, app_expected.__dict__)
@@ -63,7 +64,11 @@ class AssembleModelTest(unittest.TestCase):
             Environment(type="dokku", name="qa", deploy_host="qa.nexxera.com",
                         app_deployment_file_url="git@git.nexxera.com")
 
-    # def test_null_app_deployment_file_url_should_be_accepted(self):
-    #     with self.assertRaises(BadFormedRemoteConfigUrlError):
-    #         Environment(type="dokku", name="qa", deploy_host="qa.nexxera.com",
-    #                     app_deployment_file_url="git@gitlab.nexxera.com:group/{mygroup}.git")
+    def test_should_be_able_to_configure_scripts(self):
+        app = App("name", "group",
+                  scripts={"predeploy": "echo pre", "postdeploy": "echo post"})
+        self.assertEqual("echo pre", app.scripts["predeploy"])
+        self.assertEqual("echo post", app.scripts["postdeploy"])
+
+
+

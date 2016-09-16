@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 
 
 class OpenShiftTest(unittest.TestCase):
-
     def setUp(self):
         self.openshift = OpenshiftProvider()
         self.shell_exec = MagicMock()
@@ -72,7 +71,7 @@ class OpenShiftTest(unittest.TestCase):
             "expose service/myapp --hostname=myapp-mygroup.dev.com")
         self.openshift.openshift_exec.assert_any_call(
             """patch route myapp -p '{"spec": {"tls": {"termination": "edge", "insecureEdgeTerminationPolicy": "Redirect"}}}'"""
-            )
+        )
 
     def test_should_not_expose_service_if_exist(self):
         self._configure_route_exist("myapp", True)
@@ -99,8 +98,8 @@ class OpenShiftTest(unittest.TestCase):
     def test_app_with_long_deploy_name_should_raise_exception(self):
         with self.assertRaises(OpenShiftNameTooLongError):
             self._deploy(App("myapp", "mygroup",
-                         deploy_name="pneumoultramicroscopicossilicovulcanoconiótico",
-                         image="image", env_vars={}))
+                             deploy_name="pneumoultramicroscopicossilicovulcanoconiótico",
+                             image="image", env_vars={}))
 
     def test_undeploy_should_call_delete(self):
         self._undeploy()
@@ -138,10 +137,18 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.openshift_exec.assert_any_call(
             "deploy myapp --latest")
 
+    def test_should_be_able_to_configure_pre_deploy_script(self):
+        self._deploy_by_image(scripts={"predeploy": "echo predeploy"})
+        self.openshift.openshift_exec.assert_any_call(
+            "deploy myapp --latest")
+
     # helpers
 
-    def _deploy_by_image(self, env_vars={}, image=None):
-        app = App("myapp", "mygroup", image=image if image else "image1.dev.nexxera.com", env_vars=env_vars)
+    def _deploy_by_image(self, env_vars={}, image=None, scripts={}):
+        app = App("myapp", "mygroup",
+                  image=image if image else "image1.dev.nexxera.com",
+                  env_vars=env_vars,
+                  scripts=scripts)
         self._deploy(app)
 
     def _deploy_by_source(self, env_vars={}):
@@ -180,4 +187,3 @@ class OpenShiftTest(unittest.TestCase):
 
     def _configure_openshift_exec(self):
         self.openshift.openshift_exec = MagicMock(return_value=(None, ""))
-
