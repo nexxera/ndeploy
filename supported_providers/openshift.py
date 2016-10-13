@@ -119,19 +119,6 @@ class OpenshiftProvider(AbstractProvider):
         if current_revision == self.get_app_deploy_revision():
             self.force_deploy()
 
-    def get_image_tag(self):
-        """
-        Returns the image tag of app.image url or 'latest' if it doesn't have any
-
-        Returns:
-            str: image tag name of current app
-
-        """
-        assert self.app.image, "can only be used if app has image"
-        tokens = self.app.image.split(":")
-        assert len(tokens) == 1 or len(tokens) == 2, "url should have only one ':' or not have at all"
-        return tokens[1] if ":" in self.app.image else "latest"
-
     def import_image(self):
         """
         Imports the app image in openshift registry.
