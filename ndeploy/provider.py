@@ -146,6 +146,25 @@ class AbstractProvider:
         assert len(tokens) == 1 or len(tokens) == 2, "url should have only one ':' or not have at all"
         return tokens[1] if ":" in self.app.image else "latest"
 
+    @staticmethod
+    def prepare_env_vars(env_vars):
+        """
+        Format the env_vars dict as a string with the following format:
+
+            $ self.prepare_env_vars({ "ENV1": "value1", "ENV2": "value2" })
+            $ ENV1=value1 ENV2=value2
+
+        Args:
+            env_vars (dict): dict containing environment keys and values
+
+        Returns:
+            str containing the formatted values
+
+        """
+        env_vars_as_str = ' '.join('{}="{}"'.format(k, v)
+                                   for k, v in sorted(env_vars.items()))
+        return env_vars_as_str
+
 
 class ProviderRepository:
     """

@@ -463,25 +463,6 @@ class OpenshiftProvider(AbstractProvider):
     def _load_postgres(self, resource):
         return "postgres://user:senha@localhost:5432/%s" % resource
 
-    @staticmethod
-    def prepare_env_vars(env_vars):
-        """
-        Format the env_vars dict as a string with the following format:
-
-            $ self.prepare_env_vars({ "ENV1": "value1", "ENV2": "value2" })
-            $ ENV1=value1 ENV2=value2
-
-        Args:
-            env_vars (dict): dict containing environment keys and values
-
-        Returns:
-            str containing the formatted values
-
-        """
-        env_vars_as_str = ' '.join('{}="{}"'.format(k, v)
-                                   for k, v in sorted(env_vars.items()))
-        return env_vars_as_str
-
     def get_openshift_area_name(self):
         """
         Returns the current openshift project name.

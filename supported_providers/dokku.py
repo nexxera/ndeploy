@@ -31,6 +31,7 @@ class DokkuProvider(AbstractProvider):
         self._pull_image()
         self._tag_image()
         self._create_app_if_does_not_exist()
+        self._update_env_vars()
         self._tag_deploy()
 
     def deploy_by_git_push(self, app, env):
@@ -67,7 +68,7 @@ class DokkuProvider(AbstractProvider):
         print("...Creating app {deploy_name} .......".format(deploy_name=self.app.deploy_name), end="")
         err, out = self.dokku_exec("apps:create {app_name}".format(app_name=self.app.deploy_name))
         if len(err) > 0 and 'already taken' in err:
-            print("App already registered.")
+            print("...App already registered....", end="")
         print("[OK]")
 
     def _pull_image(self):
@@ -92,3 +93,12 @@ class DokkuProvider(AbstractProvider):
         print("...Deploying image {}".format(self.app.image))
         self.dokku_exec("tags:deploy {app_name} {image_tag}"
                         .format(app_name=self.app.deploy_name, image_tag=self.get_image_tag()))
+
+    def _update_env_vars(self):
+        """
+        Atualiza as variáveis de ambiente para a aplicação
+        """
+        print("...Configuring environment variables")
+        env_vars = self.prepare_env_vars(self.app.env_vars)
+        self.dokku_exec("config:set --no-restart {app_name} {env_vars}"
+                        .format(app_name=self.app.deploy_name, env_vars=env_vars))
