@@ -84,7 +84,9 @@ def deploy(**kwargs):
                             environment=kwargs['environment'])
     except NDeployError as e:
         print(e)
-
+        raise click.Abort()
+    except:
+        raise click.Abort()
 
 
 @ndeploy.command()
