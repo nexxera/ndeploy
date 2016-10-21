@@ -3,5 +3,6 @@ coverage==4.1
 pytest==2.9.2
 pytest-cov==2.2.1
 timeout-decorator==0.3.2
+GitPython==2.0.9
 git+https://gitlab.nexxera.com/motor/nexxera-setuputils.git@f2719ce672e5f1d7161b69cff58c73e7dd1b3cc8
 -e .

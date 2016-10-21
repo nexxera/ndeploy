@@ -7,6 +7,7 @@ import pkgutil
 from abc import abstractmethod
 from ndeploy.env_var_resolver import EnvVarResolver
 from ndeploy.shell_exec import ShellExec
+from ndeploy.git_exec import GitExec
 
 
 """
@@ -40,6 +41,7 @@ class AbstractProvider:
     def __init__(self):
         self.env_resolver = EnvVarResolver()
         self.shell_exec = None
+        self.git_exec = None
 
     @abstractmethod
     def deploy_by_git_push(self, app, env):
@@ -134,6 +136,9 @@ class AbstractProvider:
     def set_shell_exec(self, shell_exec):
         self.shell_exec = shell_exec
 
+    def set_git_exec(self, git_exec):
+        self.git_exec = git_exec
+
     def get_image_tag(self):
         """
         Retorna a tag da imagem de app.image url ou 'latest' quando não possui tag na url
@@ -199,6 +204,7 @@ class ProviderRepository:
                 if inspect.isclass(cls) and issubclass(cls, AbstractProvider) and cls.__type__:
                     new_provider = cls()
                     new_provider.set_shell_exec(ShellExec())
+                    new_provider.set_git_exec(GitExec())
                     _available_providers[cls.__type__] = new_provider
         return _available_providers
 

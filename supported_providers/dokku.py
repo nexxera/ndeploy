@@ -8,6 +8,8 @@ class DokkuProvider(AbstractProvider):
 
     __type__ = 'dokku'
 
+    REMOTE_NAME = 'dokku_deploy'
+
     def __init__(self):
         super().__init__()
         self.app = None
@@ -47,8 +49,23 @@ class DokkuProvider(AbstractProvider):
         self.app = app
         self.env = env
 
-        print("Deploying app: %s, repository: %s" % (app.name, app.repository))
-        raise NotImplemented()
+        print("Deploying app {app_name} by source repository: {repo}".format(app_name=app.name, repo=app.repository))
+        self._remote_git_add(self.app.repository, self.REMOTE_NAME)
+        self._create_app_if_does_not_exist()
+        self._update_env_vars()
+        url_repository, branch_name = self._get_url_split(self.app.repository)
+        self.git_exec.git_push(url_repository, branch_name, "master")
+
+    def _remote_git_add(self, repo_full_path, remote_name):
+        """
+        Adiciona o git remoto do dokku no repositório local para deploy
+
+        Args:
+            repo_full_path (str): diretório da app
+            remote_name (str): nome remoto da app
+        """
+        remote_repo = self._get_remote_repo(self.app.deploy_name, self.env.deploy_host)
+        self.git_exec.remote_git_add(repo_full_path, remote_name, remote_repo)
 
     def app_url(self, name):
         return "http://%s.com" % (name)
@@ -102,3 +119,22 @@ class DokkuProvider(AbstractProvider):
         env_vars = self.prepare_env_vars(self.app.env_vars)
         self.dokku_exec("config:set --no-restart {app_name} {env_vars}"
                         .format(app_name=self.app.deploy_name, env_vars=env_vars))
+
+    @staticmethod
+    def _get_remote_repo(deploy_name, deploy_host):
+        """
+        Retorna o repositorio remoto do dokku
+        Returns:
+            string: url git dokku
+        """
+        return "dokku@{host}:{app_name}".format(host=deploy_host, app_name=deploy_name)
+
+    @staticmethod
+    def _get_branch_name(repository):
+        repo = repository.split("@")
+        return repo[-1] if len(repo) > 1 else "master"
+
+    def _get_url_split(self, repository):
+        branch_name = self._get_branch_name(repository)
+        url = repository.replace("@{0}".format(branch_name), "")
+        return url, branch_name

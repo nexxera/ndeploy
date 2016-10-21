@@ -11,10 +11,12 @@ class DokkuTest(unittest.TestCase):
         self.dokku = DokkuProvider()
         self.shell_exec = MagicMock()
         self.dokku.set_shell_exec(self.shell_exec)
+        self.git_exec = MagicMock()
+        self.dokku.set_git_exec(self.git_exec)
         self._configure_dokku_exec()
-        self.app = App("myapp", "mygroup", image="image1.dev.registry.com")
+        self.env = Environment("dokku", "dev", "dev.com")
+        self.app = None
 
-    # -------------------------------------Helpers------------------------------------
     def test_deploy_by_image(self):
         self._deploy_and_validate_by_image()
 
@@ -25,6 +27,26 @@ class DokkuTest(unittest.TestCase):
                                               "DATA=\"teste do juca\" URL=\"http://jb.com.br\""
                                               .format(app_name=self.app.deploy_name))
 
+    def test_should_be_possible_deploy_by_local_source(self):
+        source_full_path = ".@develop"
+        self._deploy_and_validate_by_source(source_full_path)
+        self.git_exec.remote_git_add.assert_any_call(source_full_path, DokkuProvider.REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.git_push.assert_any_call(source_full_path.split("@")[0], "develop", "master")
+
+    def test_should_be_possible_injected_env_var_into_container_when_deploy_by_source(self):
+        source_full_path = ".@develop"
+        self._deploy_and_validate_by_source(source_full_path=source_full_path, env_vars={"DATA": "teste do juca", "URL": "http://jb.com.br"})
+        self.dokku.dokku_exec.assert_any_call("config:set --no-restart {app_name} "
+                                              "DATA=\"teste do juca\" URL=\"http://jb.com.br\""
+                                              .format(app_name=self.app.deploy_name))
+        self.git_exec.remote_git_add.assert_any_call(source_full_path, DokkuProvider.REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.git_push.assert_any_call(source_full_path.split("@")[0], "develop", "master")
+
+    def test_when_does_not_have_the_branch_in_the_repository_is_set_the_master_by_default(self):
+        source_full_path = "."
+        self._deploy_and_validate_by_source(source_full_path)
+        self.git_exec.remote_git_add.assert_any_call(source_full_path, DokkuProvider.REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.git_push.assert_any_call(source_full_path, "master", "master")
 
     # Helpers
 
@@ -32,9 +54,8 @@ class DokkuTest(unittest.TestCase):
         self.dokku.dokku_exec = MagicMock(return_value=("", ""))
 
     def _deploy_and_validate_by_image(self, env_vars={}):
-        self.app.env_vars = env_vars
-        env = Environment("dokku", "dev", "dev.com")
-        self.dokku.deploy(self.app, env)
+        self.app = App("myapp", "mygroup", image="image1.dev.registry.com", env_vars=env_vars)
+        self.dokku.deploy(self.app, self.env)
 
         self.dokku.dokku_exec.assert_any_call("docker-direct pull {}".format(self.app.image))
         self.dokku.dokku_exec.assert_any_call("docker-direct tag {image} dokku/{app_name}:{image_tag}"
@@ -44,3 +65,8 @@ class DokkuTest(unittest.TestCase):
         self.dokku.dokku_exec.assert_any_call("tags:deploy {app_name} {image_tag}"
                                               .format(app_name=self.app.deploy_name,
                                                       image_tag=self.dokku.get_image_tag()))
+
+    def _deploy_and_validate_by_source(self, source_full_path="", env_vars={}):
+        self.app = App("myapp", "mygroup", repository=source_full_path, env_vars=env_vars)
+        self.dokku.deploy(self.app, self.env)
+        self.dokku.dokku_exec.assert_any_call("apps:create {app_name}".format(app_name=self.app.deploy_name))
