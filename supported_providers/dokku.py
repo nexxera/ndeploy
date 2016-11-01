@@ -50,11 +50,11 @@ class DokkuProvider(AbstractProvider):
         self.env = env
 
         print("Deploying app {app_name} by source repository: {repo}".format(app_name=app.name, repo=app.repository))
-        self._remote_git_add(self.app.repository, self.REMOTE_NAME)
         self._create_app_if_does_not_exist()
         self._update_env_vars()
-        url_repository, branch_name = self._get_url_split(self.app.repository)
-        self.git_exec.git_push(url_repository, branch_name, "master")
+        dir_or_url_repository, branch_name = self._get_url_split(self.app.repository)
+        self._remote_git_add(dir_or_url_repository, self.REMOTE_NAME)
+        self.git_exec.git_push(dir_or_url_repository, self.REMOTE_NAME, branch_name, "master")
 
     def _remote_git_add(self, repo_full_path, remote_name):
         """
