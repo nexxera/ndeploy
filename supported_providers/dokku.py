@@ -52,9 +52,9 @@ class DokkuProvider(AbstractProvider):
         print("Deploying app {app_name} by source repository: {repo}".format(app_name=app.name, repo=app.repository))
         self._create_app_if_does_not_exist()
         self._update_env_vars()
-        dir_or_url_repository, branch_name = self._get_url_split(self.app.repository)
-        self._remote_git_add(dir_or_url_repository, self.REMOTE_NAME)
-        self.git_exec.git_push(dir_or_url_repository, self.REMOTE_NAME, branch_name, "master")
+        source_repository, branch_name = self._get_source_repository_and_branch(self.app.repository)
+        self._remote_git_add(source_repository, self.REMOTE_NAME)
+        self.git_exec.git_push(source_repository, self.REMOTE_NAME, branch_name, "master")
 
     def _remote_git_add(self, repo_full_path, remote_name):
         """
@@ -78,10 +78,22 @@ class DokkuProvider(AbstractProvider):
         return "postgres://user:senha@localhost:5432/%s" % (resource)
 
     def dokku_exec(self, dokku_cmd):
+        """
+        Executa comandos do dokku.
+        Ex:
+            dokku_exec(self, 'apps:create showdomilhao'):
+        Args:
+            dokku_cmd: dokku command para executar
+        Returns:
+            tuple (err, out) contendo a resposta do ShellExec.execute_program
+        """
         return self.shell_exec.execute_program("ssh dokku@{deploy_host} {cmd}"
                                                .format(deploy_host=self.env.deploy_host, cmd=dokku_cmd))
 
     def _create_app_if_does_not_exist(self):
+        """
+        Cria uma app no dokku caso não exista
+        """
         print("...Creating app {deploy_name} .......".format(deploy_name=self.app.deploy_name), end="")
         err, out = self.dokku_exec("apps:create {app_name}".format(app_name=self.app.deploy_name))
         if len(err) > 0 and 'already taken' in err:
@@ -131,10 +143,25 @@ class DokkuProvider(AbstractProvider):
 
     @staticmethod
     def _get_branch_name(repository):
+        """
+        Retorna o nome do branch passado no repository
+        Args:
+            repository: repositorio do source contendo o nome do branch a ser baixado
+        Returns:
+            nome do branch passado no repository
+        """
         repo = repository.split("@")
         return repo[-1] if len(repo) > 1 else "master"
 
-    def _get_url_split(self, repository):
+    def _get_source_repository_and_branch(self, repository):
+        """
+        Retona a url ou diretório do repósitorio git e nome da branch passados no repository
+        Args:
+            repository: repositório do source contendo o nome do branch a ser baixado
+        Returns:
+            source_repository: url ou diretório do repositório git
+            branch_name: nome do branch
+        """
         branch_name = self._get_branch_name(repository)
-        url = repository.replace("@{0}".format(branch_name), "")
-        return url, branch_name
+        source_repository = repository.replace("@{0}".format(branch_name), "")
+        return source_repository, branch_name
