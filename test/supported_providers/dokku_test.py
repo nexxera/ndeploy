@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from ndeploy.model import App, Environment
 from supported_providers.dokku import DokkuProvider
@@ -40,13 +40,27 @@ class DokkuTest(unittest.TestCase):
                                               "DATA=\"teste do juca\" URL=\"http://jb.com.br\""
                                               .format(app_name=self.app.deploy_name))
         self.git_exec.remote_git_add.assert_any_call(source_repository.split("@")[0], DokkuProvider.REMOTE_NAME, "dokku@dev.com:myapp")
-        self.git_exec.git_push.assert_any_call(source_repository.split("@")[0], DokkuProvider.REMOTE_NAME, "develop", "master")
+        self.git_exec.git_push.assert_any_call(source_repository.split("@")[0], DokkuProvider.REMOTE_NAME,
+                                               source_repository.split("@")[1], "master")
 
     def test_when_does_not_have_the_branch_in_the_repository_is_set_the_master_by_default(self):
         source_repository = "."
         self._deploy_and_validate_app_create_by_source(source_repository)
         self.git_exec.remote_git_add.assert_any_call(source_repository, DokkuProvider.REMOTE_NAME, "dokku@dev.com:myapp")
         self.git_exec.git_push.assert_any_call(source_repository, DokkuProvider.REMOTE_NAME, "master", "master")
+
+    @patch('ndeploy.utils.create_temp_directory')
+    def test_should_be_possible_deploy_by_remote_source(self, mock_create_temp_directory):
+        repository = "https://git.nexx.com/utils/ndeploy.git"
+        branch_name = "master"
+        source_full_path = "/tmp/test"
+        source_repository = "{0}@{1}".format(repository, branch_name)
+        mock_create_temp_directory.return_value = source_full_path
+
+        self._deploy_and_validate_app_create_by_source(source_repository)
+        self.git_exec.git_clone_from.assert_any_call(repository, source_full_path, branch_name)
+        self.git_exec.remote_git_add.assert_any_call(source_full_path, DokkuProvider.REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.git_push.assert_any_call(source_full_path, DokkuProvider.REMOTE_NAME, branch_name, "master")
 
     # Helpers
 

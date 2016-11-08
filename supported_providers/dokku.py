@@ -1,4 +1,5 @@
 from ndeploy.provider import AbstractProvider, service
+from ndeploy import utils
 
 
 class DokkuProvider(AbstractProvider):
@@ -9,11 +10,13 @@ class DokkuProvider(AbstractProvider):
     __type__ = 'dokku'
 
     REMOTE_NAME = 'dokku_deploy'
+    DELIMITER_BRANCH_NAME = '@'
 
     def __init__(self):
         super().__init__()
         self.app = None
         self.env = None
+        self._created_directory = False
 
     def deploy_by_image(self, app, env):
         """
@@ -52,9 +55,16 @@ class DokkuProvider(AbstractProvider):
         print("Deploying app {app_name} by source repository: {repo}".format(app_name=app.name, repo=app.repository))
         self._create_app_if_does_not_exist()
         self._update_env_vars()
+
         source_repository, branch_name = self._get_source_repository_and_branch(self.app.repository)
-        self._remote_git_add(source_repository, self.REMOTE_NAME)
-        self.git_exec.git_push(source_repository, self.REMOTE_NAME, branch_name, "master")
+        if self._is_url(source_repository):
+            source_full_path = self._create_temp_dir_and_clone_source(source_repository, branch_name)
+        else:
+            source_full_path = source_repository
+
+        self._remote_git_add(source_full_path, self.REMOTE_NAME)
+        self.git_exec.git_push(source_full_path, self.REMOTE_NAME, branch_name, "master")
+        self._remote_directory_if_needed(source_full_path)
 
     def _remote_git_add(self, repo_full_path, remote_name):
         """
@@ -141,8 +151,7 @@ class DokkuProvider(AbstractProvider):
         """
         return "dokku@{host}:{app_name}".format(host=deploy_host, app_name=deploy_name)
 
-    @staticmethod
-    def _get_branch_name(repository):
+    def _get_branch_name(self, repository):
         """
         Retorna o nome do branch passado no repository
         Args:
@@ -150,7 +159,7 @@ class DokkuProvider(AbstractProvider):
         Returns:
             nome do branch passado no repository
         """
-        repo = repository.split("@")
+        repo = repository.split(self.DELIMITER_BRANCH_NAME)
         return repo[-1] if len(repo) > 1 else "master"
 
     def _get_source_repository_and_branch(self, repository):
@@ -163,5 +172,44 @@ class DokkuProvider(AbstractProvider):
             branch_name: nome do branch
         """
         branch_name = self._get_branch_name(repository)
-        source_repository = repository.replace("@{0}".format(branch_name), "")
+        source_repository = repository.replace("{0}{1}".format(self.DELIMITER_BRANCH_NAME, branch_name), "")
         return source_repository, branch_name
+
+    @staticmethod
+    def _is_url(source_repository):
+        """
+        Verifica se o source é uma url para clone
+        Args:
+           source_repository: endereço do source
+        Returns:
+            bool: True para repositório url, False para o contrário
+        """
+        return source_repository.startswith('http')
+
+    def _create_temp_dir_and_clone_source(self, source_repository, branch_name):
+        """
+        Cria um diretório temporário e clona o repositório remoto
+        Args:
+            source_repository: endereço do source
+            branch_name: nome da branch a se clonada
+        Returns:
+             string: diretório do clone do repositório
+        """
+        temp_dir_clone = utils.create_temp_directory(prefix="clone-")
+        self._created_directory = True
+        try:
+            self.git_exec.git_clone_from(source_repository, temp_dir_clone, branch_name)
+        except:
+            utils.rmtree(temp_dir_clone)
+            raise
+
+        return temp_dir_clone
+
+    def _remote_directory_if_needed(self, source_full_path):
+        """
+        Remove o diretório temporário quando criado
+        Args:
+            source_full_path: diretório do repositório
+        """
+        if self._created_directory:
+            utils.rmtree(source_full_path)

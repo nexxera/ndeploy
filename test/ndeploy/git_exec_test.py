@@ -51,3 +51,13 @@ class GitExecTest(unittest.TestCase):
 
         with self.assertRaises(expected_exception=GitExecError):
             self.git_exec.git_push(repo_full_path, remote_name, branch_local_name, branch_remote_name)
+
+    @patch('git.Repo')
+    def test_should_be_possible_to_clone_of_a_branch_git(self, repo_mock):
+        source_repository = "https://git.nexx.com/utils/ndeploy.git"
+        repo_full_path = "."
+        branch_name = "develop"
+
+        self.git_exec.git_clone_from(source_repository, repo_full_path, branch_name)
+        repo_mock.clone_from.assert_called_with(source_repository, repo_full_path,
+                                                branch=branch_name, progress=self.git_exec.progress)
