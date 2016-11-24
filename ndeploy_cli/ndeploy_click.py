@@ -85,7 +85,8 @@ def deploy(**kwargs):
     except NDeployError as e:
         print(e)
         raise click.Abort()
-    except:
+    except Exception as e:
+        print(e)
         raise click.Abort()
 
 

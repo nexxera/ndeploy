@@ -4,7 +4,7 @@ import os.path
 from ndeploy.shell_exec import ShellExec
 from ndeploy.model import App, Environment
 from ndeploy.exception import InvalidArgumentError, \
-    AppConfigFileCloneError
+    AppConfigFileCloneError, InvalidEnvironmentJsonError
 
 
 class Deployer:
@@ -47,9 +47,7 @@ class Deployer:
         app_data = None
 
         if file:
-            with open(file) as json_data:
-                app_data = json.load(json_data)
-
+            app_data = self._resolve_environment_file(file)
         env, app, provider = \
             self._resolve_app_env_and_provider(environment, group, name, app_data)
 
@@ -132,8 +130,7 @@ class Deployer:
         else:
             print("...Successfully downloaded remote app config file")
 
-        with open(cloned_file) as json_data:
-            app_data = json.load(json_data)
+        app_data = self._resolve_environment_file(cloned_file)
 
         return app_data
 
@@ -212,3 +209,22 @@ class Deployer:
         raise InvalidArgumentError("cant resolve any environment. "
                                    "Either pass an environment in app "
                                    "config file or explicitly in 'ndeploy deploy' command")
+
+    def _resolve_environment_file(self, json_file):
+        """
+        Resolves json environment config file and return a dict with json items
+
+        Args:
+            json_file (file): json configuration file
+
+        Returns:
+            dict with json_file items
+        """
+        try:
+            with open(json_file) as json_data:
+                app_json = json.load(json_data)
+                if '' in app_json['env_vars'].values():
+                    raise InvalidEnvironmentJsonError(json_file, 'Empty variable')
+                return app_json
+        except ValueError as e:
+            raise InvalidEnvironmentJsonError(json_file, e)
