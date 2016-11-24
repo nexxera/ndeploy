@@ -83,4 +83,16 @@ class InvalidVarTypeError(NDeployError):
         return "Could not parse var type with name {}" \
             .format(self.var_name)
 
+class InvalidEnvironmentJsonError(NDeployError):
+    """
+    Exception thrown when there's a bad formatation in json config file
+    """
+    def __init__(self, json_file, error):
+        self.json_file = json_file
+        self.error = error
+
+    def __str__(self):
+        return "Theres something wrong with json file {file} " \
+               "\nERROR: {error}" \
+            .format(file=self.json_file, error=self.error)
 
