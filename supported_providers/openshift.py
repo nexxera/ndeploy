@@ -465,7 +465,7 @@ class OpenshiftProvider(AbstractProvider):
 
     def get_openshift_area_name(self):
         """
-        Returns the current openshift project name.
+        Returns the current openshift project name(it must be lowercase, because openshift cant handle upper case namespaces)
         By now the project name will be the env.name. In sgslebs/ndeploy the project
         name will be the name of the user executing ndeploy
         or 'area' option passed in command line.
@@ -473,7 +473,7 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             the current openshift project name
         """
-        return self.app.group
+        return str(self.app.group).lower()
         # sgslebs/ndeploy implementation
         # default = getpass.getuser()
         # return options.get("area", default).replace(".", "")
