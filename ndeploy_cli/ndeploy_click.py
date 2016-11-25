@@ -8,9 +8,8 @@ from ndeploy import provider
 from ndeploy.shell_exec import ShellExec
 from ndeploy.exception import NDeployError
 
-
 # dependencies resolution
-NDEPLOY_HOME = os.environ['HOME']+"/.ndeploy"
+NDEPLOY_HOME = os.path.expanduser('~')+"/.ndeploy"
 env_repository = environment_repository.EnvironmentRepository(NDEPLOY_HOME, ShellExec())
 provider_repository = provider.ProviderRepository()
 deployer = deployer.Deployer(provider_repository, env_repository)
