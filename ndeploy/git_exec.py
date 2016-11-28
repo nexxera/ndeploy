@@ -57,7 +57,7 @@ class GitExec:
             raise GitExecError("Failed push for {remote_repo} repo full path {repo_full_path}"
                                .format(remote_repo=remote_name, repo_full_path=repo_full_path))
 
-    def git_clone_from(self, source_repository, repo_full_path, branch_name):
+    def git_clone_from(self, source_repository, repo_full_path, branch_name=None):
         """
         Clone de uma branch de um repositório remoto
 
@@ -66,4 +66,19 @@ class GitExec:
             repo_full_path: diretório completo para clone do fonte
             branch_name: nome do branch a ser clonada
         """
-        git.Repo.clone_from(source_repository, repo_full_path, branch=branch_name, progress=self.progress)
+        kwargs = {"progress": self.progress}
+        if branch_name:
+            kwargs["branch"] = branch_name
+        git.Repo.clone_from(source_repository, repo_full_path, **kwargs)
+
+    def git_pull(self, temp_path_app):
+        """
+        Pull do repositório remoto
+
+        Args:
+            temp_path_app: diretório completo do repositório para pull
+        """
+        repo = git.Repo(temp_path_app)
+        origin = repo.remotes
+        origin.pull(progress=self.progress)
+

@@ -23,7 +23,7 @@ class GitExecTest(unittest.TestCase):
 
     @patch('git.Repo')
     def test_should_be_possible_to_run_git_push_for_repository(self, repo_mock):
-        repo_full_path = "."
+        repo_full_path = "/tmp/appteste-ndeploy"
         remote_name = "dokku-deploy"
         branch_local_name = "master"
         branch_remote_name = "master"
@@ -40,7 +40,7 @@ class GitExecTest(unittest.TestCase):
 
     @patch('git.Repo')
     def test_when_the_remote_repository_reject_the_push_is_returned_exception(self, repo_mock):
-        repo_full_path = "."
+        repo_full_path = "/tmp/appteste-ndeploy"
         remote_name = "dokku-deploy"
         branch_local_name = "master"
         branch_remote_name = "master"
@@ -53,11 +53,21 @@ class GitExecTest(unittest.TestCase):
             self.git_exec.git_push(repo_full_path, remote_name, branch_local_name, branch_remote_name)
 
     @patch('git.Repo')
-    def test_should_be_possible_to_clone_of_a_branch_git(self, repo_mock):
+    def test_should_be_possible_to_clone_of_a_branch_remote(self, repo_mock):
         source_repository = "https://git.nexx.com/utils/ndeploy.git"
-        repo_full_path = "."
+        repo_full_path = "/tmp/appteste-ndeploy"
         branch_name = "develop"
 
         self.git_exec.git_clone_from(source_repository, repo_full_path, branch_name)
         repo_mock.clone_from.assert_called_with(source_repository, repo_full_path,
                                                 branch=branch_name, progress=self.git_exec.progress)
+
+    @patch('git.Repo')
+    def test_should_be_possible_to_pull_local_repository(self, mock_repo):
+        repo_full_path = "/tmp/appteste-ndeploy"
+
+        self.git_exec.git_pull(repo_full_path)
+        mock_instance = mock_repo.return_value
+        mock_remotes_pull = mock_instance.remotes.pull
+        mock_remotes_pull.assert_called_once_with(progress=self.git_exec.progress)
+
