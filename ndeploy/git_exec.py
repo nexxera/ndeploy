@@ -82,3 +82,16 @@ class GitExec:
         origin = repo.remotes
         origin.pull(progress=self.progress)
 
+    @staticmethod
+    def get_current_branch_name(repo_app_full_path):
+        """
+        Retorna a branch corrente do repitório
+
+        Args:
+            repo_app_full_path: diretório completo do repositório
+
+        Returns:
+            string: nome do branch corrente
+        """
+        repo = git.Repo(repo_app_full_path)
+        return repo.active_branch.name

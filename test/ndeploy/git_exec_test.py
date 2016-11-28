@@ -71,3 +71,13 @@ class GitExecTest(unittest.TestCase):
         mock_remotes_pull = mock_instance.remotes.pull
         mock_remotes_pull.assert_called_once_with(progress=self.git_exec.progress)
 
+    @patch('git.Repo')
+    def test_should_be_possible_to_get_the_name_of_the_current_branch(self, mock_repo):
+        branch_name = "develop"
+        repo_full_path = "/tmp/appteste-ndeploy"
+        mock_instance = mock_repo.return_value
+        attributes = {'active_branch.name': branch_name}
+        mock_instance.configure_mock(**attributes)
+
+        current_branch_name = self.git_exec.get_current_branch_name(repo_full_path)
+        self.assertEqual(branch_name, current_branch_name)
