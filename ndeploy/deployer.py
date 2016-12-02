@@ -111,10 +111,8 @@ class Deployer:
         local_folder = os.path.join(
             self.env_repository.get_ndeploy_dir(), "tmp")
 
-        if os.path.isdir(local_folder):
-            shutil.rmtree(local_folder)
-
-        os.makedirs(local_folder)
+        if not os.path.isdir(local_folder):
+            os.makedirs(local_folder)
 
         print("...Getting remote app config file from " + repo_url)
 
