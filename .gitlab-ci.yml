@@ -21,4 +21,4 @@ metric-analyze:
     script:
     - understand-python-analyze
     - srccheck-analyze
-    #- s101-analyze
+    - s101-analyze

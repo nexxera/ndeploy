@@ -1,4 +1,16 @@
+from ndeploy.exception import NDeployError
+from ndeploy.git_exec import GitRemoteRepoError
 from ndeploy.provider import AbstractProvider, service
+from ndeploy import utils
+
+
+class DokkuBranchNameError(NDeployError):
+    def __init__(self, branch_name):
+        self.branch_name = branch_name
+
+    def __str__(self):
+        return "Could not continue deploying because the current branch is not the same. " \
+               "Make a switch in the repository local for branch {}".format(self.branch_name)
 
 
 class DokkuProvider(AbstractProvider):
@@ -7,6 +19,9 @@ class DokkuProvider(AbstractProvider):
     """
 
     __type__ = 'dokku'
+
+    DOKKU_REMOTE_NAME = 'dokku_deploy'
+    DELIMITER_BRANCH_NAME = '@'
 
     def __init__(self):
         super().__init__()
@@ -47,8 +62,29 @@ class DokkuProvider(AbstractProvider):
         self.app = app
         self.env = env
 
-        print("Deploying app: %s, repository: %s" % (app.name, app.repository))
-        raise NotImplemented()
+        print("Deploying app {app_name} by source repository: {repo}".format(app_name=app.name, repo=app.repository))
+        self._create_app_if_does_not_exist()
+        self._update_env_vars()
+
+        source_full_path, branch_name = self._get_source_path_and_branch_name(self.app.repository)
+
+        self._remote_git_add(source_full_path, self.DOKKU_REMOTE_NAME)
+        self.git_exec.git_push(source_full_path, self.DOKKU_REMOTE_NAME, branch_name, "master")
+        print("...[Ok]")
+
+    def _remote_git_add(self, repo_full_path, remote_name):
+        """
+        Adiciona o git remoto do dokku no repositório local para deploy
+
+        Args:
+            repo_full_path (str): diretório da app
+            remote_name (str): nome remoto da app
+        """
+        remote_repo = self._get_remote_repo(self.app.deploy_name, self.env.deploy_host)
+        try:
+            self.git_exec.remote_git_add(repo_full_path, remote_name, remote_repo)
+        except GitRemoteRepoError:
+            self.git_exec.remote_set_url(repo_full_path, remote_name, remote_repo)
 
     def app_url(self, name):
         return "http://%s.com" % (name)
@@ -61,10 +97,22 @@ class DokkuProvider(AbstractProvider):
         return "postgres://user:senha@localhost:5432/%s" % (resource)
 
     def dokku_exec(self, dokku_cmd):
+        """
+        Executa comandos do dokku.
+        Ex:
+            dokku_exec(self, 'apps:create showdomilhao'):
+        Args:
+            dokku_cmd: dokku command para executar
+        Returns:
+            tuple (err, out) contendo a resposta do ShellExec.execute_program
+        """
         return self.shell_exec.execute_program("ssh dokku@{deploy_host} {cmd}"
                                                .format(deploy_host=self.env.deploy_host, cmd=dokku_cmd))
 
     def _create_app_if_does_not_exist(self):
+        """
+        Cria uma app no dokku caso não exista
+        """
         print("...Creating app {deploy_name} .......".format(deploy_name=self.app.deploy_name), end="")
         err, out = self.dokku_exec("apps:create {app_name}".format(app_name=self.app.deploy_name))
         if len(err) > 0 and 'already taken' in err:
@@ -102,3 +150,96 @@ class DokkuProvider(AbstractProvider):
         env_vars = self.prepare_env_vars(self.app.env_vars)
         self.dokku_exec("config:set --no-restart {app_name} {env_vars}"
                         .format(app_name=self.app.deploy_name, env_vars=env_vars))
+
+    @staticmethod
+    def _get_remote_repo(deploy_name, deploy_host):
+        """
+        Retorna o repositorio remoto do dokku
+        Returns:
+            string: url git dokku
+        """
+        return "dokku@{host}:{app_name}".format(host=deploy_host, app_name=deploy_name)
+
+    def _get_source_path_and_branch_name(self, repository):
+        """
+        Retona a url ou diretório do repósitorio git e nome da branch passados no repository
+        Args:
+            repository: repositório do source contendo o nome do branch a ser baixado
+        Returns:
+            source_repository: url ou diretório do repositório git
+            branch_name: nome do branch
+        """
+        source_repository, branch_name = self.get_branch_name_and_repository(repository)
+
+        if self._is_url(source_repository):
+            source_full_path = self._clone_or_pull_source(source_repository, branch_name)
+        else:
+            source_full_path = source_repository
+            if branch_name is None:
+                branch_name = self._get_current_branch_name(source_full_path)
+            else:
+                self._validate_actual_branch(branch_name, source_full_path)
+
+        return source_full_path, branch_name
+
+    @staticmethod
+    def _is_url(source_repository):
+        """
+        Verifica se o source é uma url para clone
+        Args:
+           source_repository: endereço do source
+        Returns:
+            bool: True para repositório url, False para o contrário
+        """
+        return source_repository.startswith('http')
+
+    @staticmethod
+    def _create_temp_dir(app_name):
+        """
+        Cria um diretório temporário
+        Args:
+            app_name: nome da aplicação
+        Returns:
+            string: diretório temporário
+        """
+        return utils.create_temp_directory(prefix=app_name)
+
+    def _clone_or_pull_source(self, source_repository, branch_name):
+        """
+        Cria um diretório temporário e clona o repositório remoto,
+        caso exista um diretório com o nome da aplicação será feito um pull da aplicação
+
+        Args:
+            source_repository: endereço do source
+            branch_name: nome da branch a se clonada
+        Returns:
+             string: diretório do clone do repositório
+        """
+        temp_dir_app = utils.get_temp_dir_app_if_exists(self.app.deploy_name)
+        if temp_dir_app is None:
+            print("...Cloning the repository...")
+            temp_dir_app = self._create_temp_dir(self.app.deploy_name)
+            self.git_exec.git_clone_from(source_repository, temp_dir_app, branch_name)
+        else:
+            print("...Pull from repository...")
+            self._validate_actual_branch(branch_name, temp_dir_app)
+            self.git_exec.git_pull(temp_dir_app)
+
+        return temp_dir_app
+
+    def _validate_actual_branch(self, branch_name, dir_app):
+        """
+        Valida se branch local é igual a branch de deploy
+        Args:
+            branch_name: nome da branch de deploy
+            dir_app: diretório temporário do repositório git
+        """
+        if branch_name is None:
+            print("...Using current branch: {0}....".format(self._get_current_branch_name(dir_app)))
+            return
+
+        if branch_name != self._get_current_branch_name(dir_app):
+            raise DokkuBranchNameError(branch_name)
+
+    def _get_current_branch_name(self, dir_app):
+        return self.git_exec.get_current_branch_name(dir_app)

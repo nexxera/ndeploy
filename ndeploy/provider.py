@@ -7,6 +7,7 @@ import pkgutil
 from abc import abstractmethod
 from ndeploy.env_var_resolver import EnvVarResolver
 from ndeploy.shell_exec import ShellExec
+from ndeploy.git_exec import GitExec
 
 
 """
@@ -40,6 +41,7 @@ class AbstractProvider:
     def __init__(self):
         self.env_resolver = EnvVarResolver()
         self.shell_exec = None
+        self.git_exec = None
 
     @abstractmethod
     def deploy_by_git_push(self, app, env):
@@ -134,6 +136,9 @@ class AbstractProvider:
     def set_shell_exec(self, shell_exec):
         self.shell_exec = shell_exec
 
+    def set_git_exec(self, git_exec):
+        self.git_exec = git_exec
+
     def get_image_tag(self):
         """
         Retorna a tag da imagem de app.image url ou 'latest' quando não possui tag na url
@@ -164,6 +169,21 @@ class AbstractProvider:
         env_vars_as_str = ' '.join('{}="{}"'.format(k, v)
                                    for k, v in sorted(env_vars.items()))
         return env_vars_as_str
+
+    def get_branch_name_and_repository(self, repository):
+        """
+        Returns the repository and name of the branch the repository field.
+        If the branch name is not informed, then the return of branch_name will be None.
+        Args:
+            repository: source repository containing the name of de branch
+        Returns:
+            string (repository): url or full path the repository git
+            string (branch_name): name of the branch
+        """
+        repo = repository.split(self.DELIMITER_BRANCH_NAME)
+        repository = repo[0]
+        branch_name = repo[-1] if len(repo) > 1 else None
+        return repository, branch_name
 
 
 class ProviderRepository:
@@ -199,6 +219,7 @@ class ProviderRepository:
                 if inspect.isclass(cls) and issubclass(cls, AbstractProvider) and cls.__type__:
                     new_provider = cls()
                     new_provider.set_shell_exec(ShellExec())
+                    new_provider.set_git_exec(GitExec())
                     _available_providers[cls.__type__] = new_provider
         return _available_providers
 
