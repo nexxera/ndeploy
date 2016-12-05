@@ -160,20 +160,6 @@ class DokkuProvider(AbstractProvider):
         """
         return "dokku@{host}:{app_name}".format(host=deploy_host, app_name=deploy_name)
 
-    def _get_branch_name_and_repository(self, repository):
-        """
-        Retorna o nome do branch passado no repository e o repositório
-        Args:
-            repository: repositorio do source contendo o nome do branch a ser baixado
-        Returns:
-            string (repository): endereço ou path do repositório git
-            string (branch_name): nome do branch passado no repository
-        """
-        repo = repository.split(self.DELIMITER_BRANCH_NAME)
-        repository = repo[0]
-        branch_name = repo[-1] if len(repo) > 1 else None
-        return repository, branch_name
-
     def _get_source_path_and_branch_name(self, repository):
         """
         Retona a url ou diretório do repósitorio git e nome da branch passados no repository
@@ -183,7 +169,7 @@ class DokkuProvider(AbstractProvider):
             source_repository: url ou diretório do repositório git
             branch_name: nome do branch
         """
-        source_repository, branch_name = self._get_branch_name_and_repository(repository)
+        source_repository, branch_name = self.get_branch_name_and_repository(repository)
 
         if self._is_url(source_repository):
             source_full_path = self._clone_or_pull_source(source_repository, branch_name)

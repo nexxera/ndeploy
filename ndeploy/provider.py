@@ -170,6 +170,21 @@ class AbstractProvider:
                                    for k, v in sorted(env_vars.items()))
         return env_vars_as_str
 
+    def get_branch_name_and_repository(self, repository):
+        """
+        Returns the repository and name of the branch the repository field.
+        If the branch name is not informed, then the return of branch_name will be None.
+        Args:
+            repository: source repository containing the name of de branch
+        Returns:
+            string (repository): url or full path the repository git
+            string (branch_name): name of the branch
+        """
+        repo = repository.split(self.DELIMITER_BRANCH_NAME)
+        repository = repo[0]
+        branch_name = repo[-1] if len(repo) > 1 else None
+        return repository, branch_name
+
 
 class ProviderRepository:
     """
