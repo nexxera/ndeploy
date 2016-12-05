@@ -4,8 +4,21 @@ from ndeploy.exception import NDeployError
 
 
 class GitExecError(NDeployError):
+    def __init__(self, message):
+        self.message = "Git exec error: {}".format(message)
+
+
+class GitRemoteRepoError(NDeployError):
     def __init__(self, name):
         self.name = name
+
+
+class GitNoSuchPathError(NDeployError):
+    def __init__(self, repository):
+        self.repository = repository
+
+    def __str__(self):
+        return "The path {} is not a git repository.".format(self.repository)
 
 
 class Progress(git.RemoteProgress):
@@ -35,8 +48,25 @@ class GitExec:
             remote_name: nome do repositório remote
             remote_repo: endereço do repositório remoto
         """
-        repo = git.Repo(repo_full_path)
-        return repo.create_remote(remote_name, remote_repo)
+        try:
+            repo = git.Repo(repo_full_path)
+            return repo.create_remote(remote_name, remote_repo)
+        except git.NoSuchPathError:
+            raise GitNoSuchPathError(repo_full_path)
+        except git.GitCommandError as e:
+            error_string = "remote {} already exists".format(remote_name)
+            if error_string in e.stderr:
+                raise GitRemoteRepoError("Remote {} already exists".format(remote_name))
+            else:
+                raise GitExecError(e)
+
+    @staticmethod
+    def remote_set_url(repo_full_path, remote_name, remote_repo):
+        try:
+            repo = git.Repo(repo_full_path)
+            repo.remote(remote_name).set_url(remote_repo)
+        except git.NoSuchPathError:
+            raise GitNoSuchPathError(repo_full_path)
 
     def git_push(self, repo_full_path, remote_name, branch_local_name, branch_remote_name):
         """
@@ -48,14 +78,20 @@ class GitExec:
             branch_local_name: nome da branch local
             branch_remote_name: nome da branch remota
         """
-        repo = git.Repo(repo_full_path)
-        repo_remote = repo.remote(remote_name)
-        ref_spec = "{branch_local}:{branch_remote}".format(branch_local=branch_local_name, branch_remote=branch_remote_name)
-        push_info = repo_remote.push(ref_spec, progress=self.progress)[0]
+        try:
+            repo = git.Repo(repo_full_path)
+            repo_remote = repo.remote(remote_name)
+            ref_spec = "{branch_local}:{branch_remote}".format(branch_local=branch_local_name,
+                                                               branch_remote=branch_remote_name)
+            push_infos = repo_remote.push(ref_spec, progress=self.progress)
 
-        if push_info.flags & GitExec.REMOTE_REJECTED:
-            raise GitExecError("Failed push for {remote_repo} repo full path {repo_full_path}"
-                               .format(remote_repo=remote_name, repo_full_path=repo_full_path))
+            print(push_infos[0].summary)
+
+            if push_infos[0].flags & GitExec.REMOTE_REJECTED:
+                raise GitExecError("Failed push for {remote_repo} repo full path {repo_full_path}"
+                                   .format(remote_repo=remote_name, repo_full_path=repo_full_path))
+        except git.NoSuchPathError:
+            raise GitNoSuchPathError(repo_full_path)
 
     def git_clone_from(self, source_repository, repo_full_path, branch_name=None):
         """
@@ -69,7 +105,10 @@ class GitExec:
         kwargs = {"progress": self.progress}
         if branch_name:
             kwargs["branch"] = branch_name
-        git.Repo.clone_from(source_repository, repo_full_path, **kwargs)
+        try:
+            git.Repo.clone_from(source_repository, repo_full_path, **kwargs)
+        except git.GitCommandError as e:
+            raise GitExecError(e)
 
     def git_pull(self, temp_path_app):
         """
@@ -78,9 +117,12 @@ class GitExec:
         Args:
             temp_path_app: diretório completo do repositório para pull
         """
-        repo = git.Repo(temp_path_app)
-        origin = repo.remotes
-        origin.pull(progress=self.progress)
+        try:
+            repo = git.Repo(temp_path_app)
+            origin = repo.remotes.origin
+            origin.pull(progress=self.progress)
+        except git.NoSuchPathError:
+            raise GitNoSuchPathError(temp_path_app)
 
     @staticmethod
     def get_current_branch_name(repo_app_full_path):
@@ -93,5 +135,8 @@ class GitExec:
         Returns:
             string: nome do branch corrente
         """
-        repo = git.Repo(repo_app_full_path)
-        return repo.active_branch.name
+        try:
+            repo = git.Repo(repo_app_full_path)
+            return repo.active_branch.name
+        except git.NoSuchPathError:
+            raise GitNoSuchPathError(repo_app_full_path)

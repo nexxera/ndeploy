@@ -68,7 +68,7 @@ class GitExecTest(unittest.TestCase):
 
         self.git_exec.git_pull(repo_full_path)
         mock_instance = mock_repo.return_value
-        mock_remotes_pull = mock_instance.remotes.pull
+        mock_remotes_pull = mock_instance.remotes.origin.pull
         mock_remotes_pull.assert_called_once_with(progress=self.git_exec.progress)
 
     @patch('git.Repo')

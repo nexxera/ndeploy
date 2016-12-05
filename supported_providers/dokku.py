@@ -1,4 +1,5 @@
 from ndeploy.exception import NDeployError
+from ndeploy.git_exec import GitRemoteRepoError
 from ndeploy.provider import AbstractProvider, service
 from ndeploy import utils
 
@@ -69,6 +70,7 @@ class DokkuProvider(AbstractProvider):
 
         self._remote_git_add(source_full_path, self.DOKKU_REMOTE_NAME)
         self.git_exec.git_push(source_full_path, self.DOKKU_REMOTE_NAME, branch_name, "master")
+        print("...[Ok]")
 
     def _remote_git_add(self, repo_full_path, remote_name):
         """
@@ -79,7 +81,10 @@ class DokkuProvider(AbstractProvider):
             remote_name (str): nome remoto da app
         """
         remote_repo = self._get_remote_repo(self.app.deploy_name, self.env.deploy_host)
-        self.git_exec.remote_git_add(repo_full_path, remote_name, remote_repo)
+        try:
+            self.git_exec.remote_git_add(repo_full_path, remote_name, remote_repo)
+        except GitRemoteRepoError:
+            self.git_exec.remote_set_url(repo_full_path, remote_name, remote_repo)
 
     def app_url(self, name):
         return "http://%s.com" % (name)
@@ -226,9 +231,11 @@ class DokkuProvider(AbstractProvider):
         """
         temp_dir_app = utils.get_temp_dir_app_if_exists(self.app.deploy_name)
         if temp_dir_app is None:
+            print("...Cloning the repository...")
             temp_dir_app = self._create_temp_dir(self.app.deploy_name)
             self.git_exec.git_clone_from(source_repository, temp_dir_app, branch_name)
         else:
+            print("...Pull from repository...")
             self._validate_actual_branch(branch_name, temp_dir_app)
             self.git_exec.git_pull(temp_dir_app)
 
