@@ -7,7 +7,7 @@ onde pode ser informado todos os dados e dependências necessárias para deploya
 # **Funcionalidades do NDeploy**
 
 O NDeploy foi concebido para viabilizar o deploy de aplicações de várias formas, sendo assim fica a cargo do usuário decidir como ele deseja usar o ndeploy.
-Abaixo segue a lista de possíveis forma de utilização:
+Abaixo segue a lista de possíveis formas de utilização:
 
 #### Gestão de ambientes
 
@@ -16,24 +16,17 @@ O NDeploy possibilita ao usuário informar o ambiente no qual será realizado o 
 - Dados via linha de comando: na execução do ndeploy o usuário informa os dados do ambiente no qual será realizado o deploy.
 - Dados no arquivo json de deployment: no arquivo json é possível definir os dados do ambiente onde será relizado o deploy, desta forma é possível que
 esses dados possam ser versionados junto com o projeto. É indicado um arquivo de deployment para cada ambiente.
-- Cadastramento do ambiente na ferramenta: Através de comandos na ferramenta, é possível incluir ambientes que serão persistidos no diretóri o $HOME do usuário,
+- Cadastramento do ambiente na ferramenta: Através de comandos na ferramenta, é possível incluir ambientes que serão persistidos no diretório $HOME do usuário,
 esses ambientes ganham um nome e no momento da execução do deploy deve ser informado o nome do ambiente que deve ser usado.
 
 #### Fonte do deploy
 
 O Ndeploy possibilita que o deploy seja realizado apartir de duas fontes, o **repositório git do projeto** ou a **imagem docker gerada do projeto**.
-Desta forma o usuário que decide através do dados informados no arquivo de deployment qual fonte o ndeploy deve usar conforme sequência abaixo:
-- Imagem docker: se informado o endereço de publicação de uma imagem docker, essa será a fonte prioritária para deploy
-- Repositório git: se informado o endereço do repositório o ndeploy faz baixa o código fonte e faz um "git push" do fonte para o ambiente informado.
-Ainda é possível apenas informar o repositório como "this" para que o ndeploy considere que a execução está sendo feita no próprio diretório git do projeto,
-sendo assim o git push será feito sobre o diretório d eexecução do ndeploy.
-
-#### Deploy e uma ou várias aplicações
-
-No arquivo de deployment é possível informar os dados de uma ou mais aplicações a serem deployadas.
-Geralmente o uso de uma aplicação do arquivo de deployment é para processo de integração contínua.
-O Uso de várias aplicações no arquivo de deployment se dá para casos onde o usuário deseja fazer o deploy de N aplicações para montar um cenário de execução
-local ou para testes onde ele não quer ter que baixar todos os fontes do projeto e fazer uma implantação manual de aplicação por aplicação.
+Desta forma o usuário que decide através dos dados informados no arquivo de deployment qual fonte o ndeploy deve usar conforme sequência abaixo:
+- Imagem docker: se informado o endereço de publicação de uma imagem docker, essa será a fonte prioritária para deploy;
+- Repositório git: se informado o endereço do repositório o ndeploy faz a baixa do código fonte e faz um "git push" do fonte para o ambiente informado.
+Ainda é possível informar o repositório local com "." (para diretório corrente) ou "/git/application" (para full path do diretório), para que o ndeploy considere que a execução do "git push" seja feita sobre o diretório do projeto local.<br>
+Nesse caso, é possível passar a branch que será atribuida para o deploy utilizando um "@" após o repositório e incluindo o nome da branch.
 
 # **Como instalar o NDeploy**
 
@@ -41,7 +34,13 @@ O NDploy é uma ferramenta implementada em **Python** (3.5.1), e para sua instal
 Para instalar o NDeploy basta executar o comando:
 
 ```
-pip install git+https://git.nexxera.com/ci-utils/ndeploy.git 
+pip install git@gitlab.nexxera.com:continuous-deployment/ndeploy.git 
+```
+
+# **Como atualizar o NDeploy**
+
+```
+pip install --upgrade git@gitlab.nexxera.com:continuous-deployment/ndeploy.git
 ```
 
 # **Como alterar o código**
@@ -50,7 +49,7 @@ Para desenvolver o código é preciso instalar os requirements de desenvolviment
 Clonar o repositório:
 
 ```
-git clone https://git.nexxera.com/ci-utils/ndeploy.git
+git clone https://gitlab.nexxera.com/continuous-deployment/ndeploy.git
 ```
 
 Instalar dependências:
@@ -67,21 +66,27 @@ paver coverage
 
 # **Exemplos do arquivo de deployment**
 
-- [Deploy de uma única aplicação, contendo os dados do ambiente pra deploy.](ci-utils/ndeploy$1)
+- [Deploy de uma única aplicação, contendo os dados do ambiente pra deploy.](docs/json_examples/simgle-app-env.json)
 
     - Comando: ndeploy deploy -f app.json
 
-- [Deploy de uma única aplicação, informando dados do ambiente via linha de comando.](https://git.nexxera.com/ci-utils/ndeploy/snippets/2)
+- [Deploy de uma única aplicação, informando dados do ambiente via linha de comando.](docs/json_examples/simgle-app.json)
 
     - Comando: ndeploy deploy -f app.json -h dev.nexxera.com -t dokku
 
-- [Deploy de uma única aplicação, informando o ambiente via linha de comando.](https://git.nexxera.com/ci-utils/ndeploy/snippets/2)
+- [Deploy de uma única aplicação, informando o ambiente via linha de comando.](docs/json_examples/simgle-app.json)
 
-    - É necessário ter cadastrado o ambiente, através do comando: ndeploy addenv
+    É necessário ter cadastrado o ambiente, através do comando: ndeploy addenv
     - Comando: ndeploy deploy -f app.json -e dev
+    
 
-- [Deploy de várias aplicações, informando o ambiente via linha de comando.](https://git.nexxera.com/ci-utils/ndeploy/snippets/3)
-
-    - É necessário ter cadastrado o ambiente, através do comando: ndeploy addenv
-    - Comando: ndeploy deploy -f app.json -e dev
-
+# **Descrição dos campos do arquivo json**
+| **Campo** | **Obrigatório** | **Descrição** | **Default** |
+|---------|:---------:|---------------------------|----------------------------|
+| name | sim | Nome da aplicação, que deve ser o mesmo nome da aplicação no repositório git. | -- |
+| group | sim | Nome do grupo dessa aplicação, que deve ser o mesmo nome do grupo no repositório git. | -- |
+| deploy_name | não | Nome da aplicação a ser deployada. | Usado campo name quando não informado. |
+| group_name | não | Grupo da aplicação a ser deployada. | Usado o campo group quando não informado. |
+| image | não | Endereço do registry da imagem docker. <br>Exemplo: "gitlab-dreg.nexxera.com/ivanilson.zapelini/django_exemplo:master" | -- |
+| repository | não | Endereço do repositório git, sendo remoto ou local. <br>Exemplo remoto: "https://gitlab.nexxera.com/ivanilson.zapelini/django_exemplo.git@master" <br>Exemplo local: ".@master" ou "~/git/django_exemplo@master" | -- |
+| env_vars | sim | Dicionário com as variáveis de ambientes que devem ser setadas na aplicação. | -- |

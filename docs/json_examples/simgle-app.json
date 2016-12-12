@@ -1,0 +1,12 @@
+{
+  "name": "hello2",
+  "group": "my-group2",
+  "deploy_name": "hello-world",
+  "image": "gitlab-dreg.nexxera.com/example/nexxeraflow-ci-python:develop-integrated",
+  "repository": "https://gitlab.nexxera.com/example/nexxeraflow-ci-python.git@develop",
+  "env_vars": {
+    "APP_ENV": "Development",
+    "MAKLM": "kjsa",
+    "DATABASE_URL": "oracle://teste:senha@TST",
+  }
+}
