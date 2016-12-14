@@ -1,0 +1,5 @@
+click
+gitpython
+Jinja2
+timeout-decorator
+git+https://gitlab.nexxera.com/motor/nexxera-setuputils.git#egg=nexxera_setuputils-0.0.1
