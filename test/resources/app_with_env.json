@@ -10,6 +10,12 @@
     "APP_NOTIFICATION_URL": "{app:notification}",
     "DATABASE_URL": "{service:postgres:teste}",
     "URL_OPEN_ID": "http://www.teste.com"
+  },
+  "environment" : {
+    "name": "dev",
+    "type": "dokku",
+    "deploy_host": "dev.nexxera.com"
   }
+
 }
 

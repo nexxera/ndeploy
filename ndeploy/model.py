@@ -1,53 +1,125 @@
 """
-Models usados no processo de deploy.
+Models used in deploy process
 """
+from ndeploy.exception import BadFormedRemoteConfigUrlError
+
 
 class Environment:
     """
-    Model para os dados de Environment.
+    Data model for a target environment in ndeploy
     """
 
     def __init__(self, type, name, deploy_host, app_deployment_file_url=None):
         """
-        Construtor
+        Constructor.
         Args:
-            type: Tipo de ambiente, relacionado a ferramenta Paas a qual os dados do ambiente se refere, ex.: dokku, openshift, heroku, etc.
-            name: Nome do Environment, ex.: dev, qa, stage, production, etc.
-            deploy_host: Host de acesso a ferramenta Paas onde é realizado o deploy.
-            app_deployment_file_url: Template usado para baixar arquivo de configuração da aplicação a ser deployada.
+            type (str): environment type.
+                Ex: 'openshift', 'dokku', 'heroku', etc.
+            name (str): environment name.
+                Ex: 'dev', 'qa', 'stage', 'production', etc.
+            deploy_host (str): host where the target apps will be deployed
+            app_deployment_file_url (str): template url from where the
+                remote apps configuration will be downloaded.
+                Should have three tokens separated by spaces
+                [[REPO_GIT_URL]] [[BRANCH]] [[RELATIVE_APP_JSON]]
+                The REPO_GIT_URL should have a {group} placeholder
+                The RELATIVE_APP_JSON should have a {{app}} placeholder
+                Ex: git@git.nexxera.com/conf-qa/{group}.git develop {app}.json
         """
         self.type = type
         self.name = name
         self.deploy_host = deploy_host
         self.app_deployment_file_url = app_deployment_file_url
 
+        self.check_is_valid()
+
+    def update(self, env):
+        """
+        Updates an instance of Environment.
+        The environment name will keep the same.
+
+        Args:
+            env (Environment): the env with updated data
+        """
+        assert env.name == self.name
+        self.type = env.type
+        self.deploy_host = env.deploy_host
+        self.app_deployment_file_url = env.app_deployment_file_url
+
+        self.check_is_valid()
+
+    def check_is_valid(self):
+        """
+        Verifies if the Environment data is valid.
+
+        Raises:
+            BadFormedRemoteConfigUrlError if `app_deployment_file_url`
+                is invalid
+
+        """
+        if not self.app_deployment_file_url_is_valid():
+            raise BadFormedRemoteConfigUrlError(self.name,
+                                                self.app_deployment_file_url)
+
+    def app_deployment_file_url_is_valid(self):
+        """
+        Tells if current environment data is in a valid format
+
+        Returns:
+            True if is valid format, False otherwise
+
+        """
+        if self.app_deployment_file_url is None:
+            return True
+
+        repo_info = self.app_deployment_file_url.split()
+        return len(repo_info) == 3 and "{group}" in repo_info[0] and "{name}" in repo_info[2]
+
+    def format_remote_deployment_file_url(self, group, name):
+        """
+        Parses and formats the app_deployment_file_url with group and
+        name and return a tuple containing the repo info
+        Args:
+            group (str):
+            name (str):
+
+        Returns:
+            Tuple containing (repo_url, branch, file_relative_path)
+
+        """
+        assert self.app_deployment_file_url is not None, \
+            "trying to format a None app_deployment_file_url"
+        self.check_is_valid()
+        repo_info = self.app_deployment_file_url.split()
+        return repo_info[0].format(group=group), repo_info[1], repo_info[2].format(name=name)
+
 
 class App:
     """
-    Model para os dados de um aplicação a ser deployada.
+    Data model for an application in ndeploy.
     """
 
-    def __init__(self, name, deploy_name=None, repository=None, image=None, env_vars=None):
+    def __init__(self, name, group, **args):
         """
-        Construtor
+        Constructor.
+
         Args:
-            name: Nome da aplicação.
-            deploy_name: Nome de deploy da aplicação, quando informado a aplicação será deployada com esse nome, caso contrário será usado o "name"
-            repository: Repositório git onde estão os fontes da aplicação. Se não informado será considerado que o repositório git é o repositório de execução.
-            image: Imagem docker usada para deploy. Quando informada o deploy ocorre preferencialmente via imagem docker. Se não informado será considerado o "repository"
-            env_vars: Variáveis de ambiente que devem ser aplicada no ambiente de deploy.
-                É composta por um dicionário de dados no formato chave/valor, onde a chave é o nome da variável e valor o valor que deve estár aplicado na variável.
-                O valor pode ser informado de alguma maneiras:
-                - Valor explicito: String com valor fixo a ser aplicado na variável.
-                - Composição com variável ambientes: No meio da String pode usar chaves referentes a outras variáveis de ambiente,
-                    ex.: http://{EMAIL_USER}:{EMAIL_PASS}@deploy_host.com. Os valores EMAIL_USER e EMAIL_PASS serão substítuidos pelo valor real da variável de ambiente.
-                - Uso de serviços: Pode-se informar no valor a necessidade do uso de um serviço especifíco, ex.: service:postgres ou service:postgres:mydb,
-                    onde service indica que um serviço deve ser usado, postgres é o nome do serviço e mydb é o nome do resource a ser usado.
-                - Uso de outras apps: Pode-se informar no valor a necessidade do uso de um link com outra aplicação, ex.: app:other-app,
-                    onde app indica que um link com outra app deve ser usado, other-app é o nome da app que deve ser verificado a url para composição do link.
+            name (str): application name
+            group (str): application group
+            deploy_name (str): application name in the deploy env.
+                If not informed will use the app name.
+            repository (str): application git source repository.
+            image (str): application docker image url.
+                if passed in it will have priority over source repository.
+            env_vars (dict): environment variables that will be injected in
+                the target deploy image.
+                Each variable/value should be passed as the dict key/value
+                OS environment variables, services and app urls could be used
+                as described in `ndeploy.env_var_resolver.EnvVarResolver`
         """
         self.name = name
-        self.deploy_name = deploy_name
-        self.repository = repository
-        self.image = image
-        self.env_vars = env_vars
+        self.group = group
+        self.deploy_name = args["deploy_name"] if "deploy_name" in args else self.name
+        self.repository = args["repository"] if "repository" in args else ""
+        self.image = args["image"] if "image" in args else ""
+        self.env_vars = args["env_vars"] if "env_vars" in args else {}

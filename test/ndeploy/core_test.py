@@ -1,10 +1,10 @@
-import json
-import os
 import unittest
 
-import ndeploy.environment_repository
-from ndeploy import environment_repository, core
+from unittest import mock
+
+from ndeploy import core
 from ndeploy.model import Environment
+from .test_helpers import get_valid_deployment_file_url
 
 
 class EnvironmentTest(unittest.TestCase):
@@ -12,62 +12,46 @@ class EnvironmentTest(unittest.TestCase):
     Test ndeploy functions.
     """
 
-    def test_add_enviroments(self):
+    def setUp(self):
+        self.env_repo = mock.MagicMock()
+        self.deployer = mock.MagicMock()
+        self.core = core.NDeployCore(self.env_repo, self.deployer)
 
-        environment_repository.DIR_ENVS = os.environ['HOME'] + "/.ndeploy-tmp"
-        environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
+    def test_add_environments_should_call_environment_repository(self):
+        self.core.add_environment("dokku", "dummy", "integrated-dev.nexxera.com",
+                                  get_valid_deployment_file_url())
 
-        if os.path.isdir(environment_repository.DIR_ENVS):
-            os.removedirs(ndeploy.environment_repository.DIR_ENVS)
+        self.assertEqual(1, self.env_repo.add_environment.call_count)
+        env_called = self.env_repo.add_environment.call_args[0][0]
+        self.assertEqual(env_called.__dict__, Environment("dummy", "dokku", "integrated-dev.nexxera.com",
+                                                          get_valid_deployment_file_url()).__dict__)
 
-        core.add_environment(type="dokku",
-                             name="integrated-dev",
-                             deploy_host="integrated-dev.nexxera.com",
-                             app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
+    def test_list_environments_should_call_environment_repository(self):
+        self.core.list_environments_as_str()
+        self.assertEqual(1, self.env_repo.list_environments_as_str.call_count)
 
-        file = os.path.join(os.path.dirname(__file__), '../resources', 'model_environments.json')
-        json_data_expected = open(file).read()
-        data_expected = json.loads(json_data_expected)
+    def test_remove_environments_should_call_environment_repository(self):
+        self.core.remove_environment("dummy")
+        self.env_repo.remove_environment.assert_called_once_with("dummy")
 
-        json_data = open(ndeploy.environment_repository.FILE_ENVS).read()
-        data = json.loads(json_data)
+    def test_get_environment_key_should_call_environment_repository(self):
+        self.core.get_environment_key("dummy")
+        self.env_repo.get_environment_key.assert_called_once_with("dummy")
 
-        os.remove(ndeploy.environment_repository.FILE_ENVS)
+    def test_update_environment_should_call_environment_repository(self):
+        self.core.update_environment("dummy", "dokku", "i.com", get_valid_deployment_file_url())
+        self.assertEqual(1, self.env_repo.update_environment.call_count)
+        env_called = self.env_repo.update_environment.call_args[0][0]
+        self.assertEqual(env_called.__dict__,
+                         Environment("dokku", "dummy", "i.com", get_valid_deployment_file_url()).__dict__)
 
-        self.assertEqual(data, data_expected)
+    def test_deploy_should_call_deployer(self):
+        self.core.deploy("file", "name", "group", "environment")
+        self.deployer.deploy.assert_called_once_with("file", "name", "group", "environment")
+
+    def test_undeploy_should_call_deployer(self):
+        self.core.undeploy("name", "group", "environment")
+        self.deployer.undeploy.assert_called_once_with("name", "group", "environment")
 
 
-    def test_remove_enviroments(self):
-
-        environment_repository.DIR_ENVS = os.path.join(os.path.dirname(__file__), '../resources')
-        environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
-
-        environments = core.list_environments()
-
-        self.assertEqual(len(environments), 2)
-
-
-    def test_remove_enviroments(self):
-        environment_repository.DIR_ENVS = os.environ['HOME'] + "/.ndeploy-tmp"
-        environment_repository.FILE_ENVS = ndeploy.environment_repository.DIR_ENVS + "/environments.json"
-
-        if os.path.isdir(environment_repository.DIR_ENVS):
-            os.removedirs(ndeploy.environment_repository.DIR_ENVS)
-
-        core.add_environment(type="dokku",
-                             name="integrated-dev",
-                             deploy_host="integrated-dev.nexxera.com",
-                             app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
-
-        core.add_environment(type="openshift",
-                             name="qa",
-                             deploy_host="qa.nexxera.com",
-                             app_deployment_file_url="git@gitlab.nexxera.com:group/my-app.git")
-
-        core.remove_environment("qa")
-
-        environments = core.list_environments()
-
-        os.remove(ndeploy.environment_repository.FILE_ENVS)
-        self.assertEqual(len(environments), 1)
 

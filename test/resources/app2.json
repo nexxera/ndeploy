@@ -1,0 +1,18 @@
+{
+  "name": "hello2",
+  "group": "my-group2",
+  "deploy_name": "hello-world",
+  "image": "gitlab-dreg.nexxera.com/martim.nascimento/hello-world-ci-python:develop-integrated",
+  "repository": "python:3.5~git@gitlab.nexxera.com:isaac.souza/hello-world-ci-python.git",
+  "env_vars": {
+    "APP_ENV": "Development",
+    "MAKLM": "kjsa",
+    "DATABASE_URL": "{service:postgres:teste}"
+  },
+  "environment" : {
+    "name": "test",
+    "type": "openshift",
+    "deploy_host": "cloudint.nexxera.com"
+  }
+}
+
