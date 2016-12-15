@@ -20,5 +20,5 @@ metric-analyze:
     - metrics
     script:
     - understand-python-analyze
-    - srccheck-analyze
-    - s101-analyze
+    - srccheck-python-analyze
+    - s101-python-analyze

@@ -47,6 +47,7 @@ class DokkuProvider(AbstractProvider):
         self._tag_image()
         self._create_app_if_does_not_exist()
         self._update_env_vars()
+        self._redirect_port_host_to_container()
         self._tag_deploy()
 
     def deploy_by_git_push(self, app, env):
@@ -133,6 +134,13 @@ class DokkuProvider(AbstractProvider):
         print("...Tagging image {}".format(self.app.image))
         self.dokku_exec("docker-direct tag {image} dokku/{app_name}:{image_tag}"
                         .format(image=self.app.image, app_name=self.app.deploy_name, image_tag=self.get_image_tag()))
+
+    def _redirect_port_host_to_container(self):
+        """
+        Redireciona a porta 80 do host para 8080 do container
+        """
+        print("...Redirect port 80 for 8080...")
+        self.dokku_exec("proxy:ports-add {app_name} http:80:8080".format(app_name=self.app.deploy_name))
 
     def _tag_deploy(self):
         """
