@@ -27,6 +27,14 @@ class DokkuTest(unittest.TestCase):
                                               "DATA=\"teste do juca\" URL=\"http://jb.com.br\""
                                               .format(app_name=self.app.deploy_name))
 
+    def test_when_the_deploy_image_it_is_redirected_port_80_host_to_8080_container(self):
+        self._deploy_and_validate_by_image(env_vars={"DATA": "teste do juca", "URL": "http://jb.com.br"})
+
+        self.dokku.dokku_exec.assert_any_call("config:set --no-restart {app_name} "
+                                              "DATA=\"teste do juca\" URL=\"http://jb.com.br\""
+                                              .format(app_name=self.app.deploy_name))
+        self.dokku.dokku_exec.assert_any_call("proxy:ports-add {app_name} http:80:8080".format(app_name=self.app.deploy_name))
+
     def test_should_be_possible_deploy_by_local_source(self):
         branch_name = "develop"
         self.git_exec.get_current_branch_name.return_value = branch_name
