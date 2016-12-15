@@ -62,35 +62,6 @@ pip install -r "requirements.txt"
 Rodar testes:
 
 ```
-<<<<<<< HEAD
-{
-    "apps" : [
-    {
-      "name": "my-app",
-      "deploy_name": "super-app",
-      "repository": "git@gitlab.nexxera.com:group/my-app.git",
-      "image": "gitlab-dreg.nexxera.com/group/my-app",
-      "env_vars": {
-        "APP_ENV": "Development",
-        "TESTE": "Oi {BLA}",
-        "APP_NOTIFICATION_URL": "app:notification",
-        "DATABASE_URL": "service:postgres:teste",
-        "URL_OPEN_ID": "http://www.teste.com"
-      }
-    },
-    {
-      "name": "other-app",
-      "repository": "git@gitlab.nexxera.com:group/my-app.git",
-      "image": "gitlab-dreg.nexxera.com/group/my-app",
-      "env_vars": {
-        "APP_ENV": "Development",
-        "DATABASE_URL": "service:postgres:teste2",
-        "URL_OPEN_ID": "http://www.teste.com"
-      }
-    }
-}
-```
-=======
 paver coverage 
 ```
 
