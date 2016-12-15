@@ -34,13 +34,13 @@ O NDploy é uma ferramenta implementada em **Python** (3.5.1), e para sua instal
 Para instalar o NDeploy basta executar o comando:
 
 ```
-pip install git@gitlab.nexxera.com:continuous-deployment/ndeploy.git 
+pip install git@https://github.com/nexxera/ndeploy.git 
 ```
 
 # **Como atualizar o NDeploy**
 
 ```
-pip install --upgrade git@gitlab.nexxera.com:continuous-deployment/ndeploy.git
+pip install --upgrade git@https://github.com/nexxera/ndeploy.git
 ```
 
 # **Como alterar o código**
@@ -49,7 +49,7 @@ Para desenvolver o código é preciso instalar os requirements de desenvolviment
 Clonar o repositório:
 
 ```
-git clone https://gitlab.nexxera.com/continuous-deployment/ndeploy.git
+git clone https://github.com/nexxera/ndeploy.git
 ```
 
 Instalar dependências:
@@ -86,7 +86,7 @@ paver coverage
 | name | sim | Nome da aplicação, que deve ser o mesmo nome da aplicação no repositório git. | -- |
 | group | sim | Nome do grupo dessa aplicação, que deve ser o mesmo nome do grupo no repositório git. | -- |
 | deploy_name | não | Nome da aplicação a ser deployada. | Usado campo name quando não informado. |
-| group_name | não | Grupo da aplicação a ser deployada. | Usado o campo group quando não informado. |
-| image | não | Endereço do registry da imagem docker. <br>Exemplo: "gitlab-dreg.nexxera.com/ivanilson.zapelini/django_exemplo:master" | -- |
-| repository | não | Endereço do repositório git, sendo remoto ou local. <br>Exemplo remoto: "https://gitlab.nexxera.com/ivanilson.zapelini/django_exemplo.git@master" <br>Exemplo local: ".@master" ou "~/git/django_exemplo@master" | -- |
+| deploy_group | não | Grupo da aplicação a ser deployada. | Usado o campo group quando não informado. |
+| image | não | Endereço do registry da imagem docker. <br>Exemplo: "dockerhub.com/ivanilson/django_exemplo:master" | -- |
+| repository | não | Endereço do repositório git, sendo remoto ou local. <br>Exemplo remoto: "https://github.com/Zapelini/django_exemplo.git@master" <br>Exemplo local: ".@master" ou "~/git/django_exemplo@master" | -- |
 | env_vars | sim | Dicionário com as variáveis de ambientes que devem ser setadas na aplicação. | -- |
