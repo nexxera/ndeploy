@@ -5,6 +5,7 @@ install_requires = ["click==6.6", "timeout-decorator==0.3.2", "GitPython==2.1.1"
 
 setup(
     name='ndeploy',
+    description='Deploy N microservices to N PaaS.',
     packages=['ndeploy', 'supported_providers', 'ndeploy_cli'],
     install_requires=install_requires,
     dependency_links=[],

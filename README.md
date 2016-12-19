@@ -29,6 +29,10 @@ Desta forma o usuário que decide através dos dados informados no arquivo de de
 Ainda é possível informar o repositório local com "." (para diretório corrente) ou "/git/application" (para full path do diretório), para que o ndeploy considere que a execução do "git push" seja feita sobre o diretório do projeto local.<br>
 Nesse caso, é possível passar a branch que será atribuida para o deploy utilizando um "@" após o repositório e incluindo o nome da branch.
 
+#### PaaS Suportadas
+   * OpenShift
+   * Dokku
+
 # **Como instalar o NDeploy**
 
 O NDploy é uma ferramenta implementada em **Python** (3.5.1), e para sua instalação é necessário ter instalado também o PIP.
