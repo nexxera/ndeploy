@@ -1,24 +1,34 @@
 stages:
 - test
-- metric
+- code-analysis
 
 before_script:
   - export CI_PROJECT_NAME=`basename $CI_PROJECT_DIR`
   - export CI_PROJECT_GROUP=`dirname $CI_PROJECT_DIR | sed 's!.*/!!'`
 
-unit-test:
-    stage: test
-    tags:
-    - python-351
+# Roda testes unitários de python.
+.unit-test: &unit-test
     script:
     - pip install -r requirements.txt
-    - paver coverage
+    - make test
 
-metric-analyze:
-    stage: metric
-    tags:
-    - metrics
+unit test:
+  stage: test
+    tags: [python-351]
+    <<: *unit-test
+    artifacts:
+       paths:
+       - reports
+       expire_in: 10min
+
+metrics:
+    stage: code-analysis
+    tags: [metrics]
     script:
     - understand-python-analyze
     - srccheck-python-analyze
     - s101-python-analyze
+    artifacts:
+      paths:
+      - reports
+      expire_in: 10min

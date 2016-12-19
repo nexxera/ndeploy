@@ -1,4 +1,3 @@
-import os
 from ndeploy.provider import AbstractProvider
 import socket
 from ndeploy.exception import NDeployError
@@ -416,9 +415,7 @@ class OpenshiftProvider(AbstractProvider):
         """
         project = self.get_openshift_area_name()
         return self.shell_exec.execute_program("oc {cmd} {project}"
-            .format(cmd=oc_cmd,
-                    project="-n " + project if append_project != "" else "")
-                                                , True)
+            .format(cmd=oc_cmd, project="-n " + project if append_project != "" else ""), True)
 
     def oc_return_error(self, cmd, append_project=True):
         """
