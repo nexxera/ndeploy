@@ -1,5 +1,4 @@
 import json
-import shutil
 import os.path
 from ndeploy.shell_exec import ShellExec
 from ndeploy.model import App, Environment
