@@ -95,3 +95,9 @@ paver coverage
 | image | não | Endereço do registry da imagem docker. <br>Exemplo: "dockerhub.com/ivanilson/django_exemplo:master" | -- |
 | repository | não | Endereço do repositório git, sendo remoto ou local. <br>Exemplo remoto: "https://github.com/Zapelini/django_exemplo.git@master" <br>Exemplo local: ".@master" ou "~/git/django_exemplo@master" | -- |
 | env_vars | sim | Dicionário com as variáveis de ambientes que devem ser setadas na aplicação. | -- |
+
+
+# **Agradecimentos**
+
+Gostariamos de agradecer ao [Marcio Marchini](http://www.betterdeveloper.net), idealizador da solução e por seu apoio na reestruturação e evolução do projeto.
+Esse projeto foi iniciado a partir do projeto [script ndeploy](https://github.com/sglebs/ndeploy).
