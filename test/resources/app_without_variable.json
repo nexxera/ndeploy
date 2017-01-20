@@ -1,0 +1,9 @@
+{
+  "name": "my-app",
+  "group": "my-group",
+  "deploy_name": "super-app",
+  "repository": "git@gitlab.nexx.com:group/my-app.git",
+  "image": "gitlab-dreg.nexx.com/group/my-app",
+  "env_vars": {
+  }
+}
