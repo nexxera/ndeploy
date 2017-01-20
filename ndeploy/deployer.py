@@ -207,7 +207,8 @@ class Deployer:
                                    "Either pass an environment in app "
                                    "config file or explicitly in 'ndeploy deploy' command")
 
-    def _resolve_environment_file(self, json_file):
+    @staticmethod
+    def _resolve_environment_file(json_file):
         """
         Resolves json environment config file and return a dict with json items
 
@@ -220,8 +221,8 @@ class Deployer:
         try:
             with open(json_file) as json_data:
                 app_json = json.load(json_data)
-                if '' in app_json['env_vars'].values():
-                    raise InvalidEnvironmentJsonError(json_file, 'Empty variable')
+                # if '' in app_json['env_vars'].values():
+                #     raise InvalidEnvironmentJsonError(json_file, 'Empty variable')
                 return app_json
         except ValueError as e:
             raise InvalidEnvironmentJsonError(json_file, e)

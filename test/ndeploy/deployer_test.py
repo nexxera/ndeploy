@@ -93,6 +93,20 @@ class DeployerTest(unittest.TestCase):
         self.deployer.undeploy("app", "group", "qa")
         self._assert_undeploy_call("app", "app", "qa", "qa.nexxera.com", "openshift")
 
+    def test_should_be_deploy_with_empty_environment_variable(self):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_with_variable_empty.json')
+        self._configure_env("qa", "qa.nexx.com", "openshift", None)
+
+        self.deployer.deploy(file=local_file, environment="qa")
+        self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexx.com", "openshift")
+
+    def test_should_be_deploy_without_environment_variable(self):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_without_variable.json')
+        self._configure_env("qa", "qa.nexx.com", "openshift", None)
+
+        self.deployer.deploy(file=local_file, environment="qa")
+        self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexx.com", "openshift")
+
     def _assert_undeploy_call(self, expected_app_name, expected_app_deploy_name,
                               expected_env_name, expected_env_deploy_host, expected_env_type):
         self.provider_repo.get_provider_for.assert_called_with(expected_env_type)
