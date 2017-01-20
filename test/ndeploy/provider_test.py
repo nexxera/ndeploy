@@ -59,4 +59,3 @@ class AssembleModelTest(unittest.TestCase):
             URL_OPEN_ID="http://www.teste.com")
 
         self.assertEqual(app.env_vars, env_vars)
-

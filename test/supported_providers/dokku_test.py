@@ -33,7 +33,8 @@ class DokkuTest(unittest.TestCase):
         self.dokku.dokku_exec.assert_any_call("config:set --no-restart {app_name} "
                                               "DATA=\"teste do juca\" URL=\"http://jb.com.br\""
                                               .format(app_name=self.app.deploy_name))
-        self.dokku.dokku_exec.assert_any_call("proxy:ports-add {app_name} http:80:8080".format(app_name=self.app.deploy_name))
+        self.dokku.dokku_exec.assert_any_call("proxy:ports-add {app_name} http:80:8080"
+                                              .format(app_name=self.app.deploy_name))
 
     def test_should_be_possible_deploy_by_local_source(self):
         branch_name = "develop"
@@ -41,18 +42,22 @@ class DokkuTest(unittest.TestCase):
 
         source_repository = ".@{branch_name}".format(branch_name=branch_name)
         self._deploy_and_validate_app_create_by_source(source_repository)
-        self.git_exec.remote_git_add.assert_any_call(source_repository.split("@")[0], DokkuProvider.DOKKU_REMOTE_NAME, "dokku@dev.com:myapp")
-        self.git_exec.git_push.assert_any_call(source_repository.split("@")[0], DokkuProvider.DOKKU_REMOTE_NAME, branch_name, "master")
+        self.git_exec.remote_git_add.assert_any_call(source_repository.split("@")[0],
+                                                     DokkuProvider.DOKKU_REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.git_push.assert_any_call(source_repository.split("@")[0], DokkuProvider.DOKKU_REMOTE_NAME,
+                                               branch_name, "master")
 
     def test_should_be_possible_injected_env_var_into_container_when_deploy_by_source(self):
         self.git_exec.get_current_branch_name.return_value = "develop"
 
         source_repository = ".@develop"
-        self._deploy_and_validate_app_create_by_source(source_repository=source_repository, env_vars={"DATA": "teste do juca", "URL": "http://jb.com.br"})
+        self._deploy_and_validate_app_create_by_source(source_repository=source_repository,
+                                                       env_vars={"DATA": "teste do juca", "URL": "http://jb.com.br"})
         self.dokku.dokku_exec.assert_any_call("config:set --no-restart {app_name} "
                                               "DATA=\"teste do juca\" URL=\"http://jb.com.br\""
                                               .format(app_name=self.app.deploy_name))
-        self.git_exec.remote_git_add.assert_any_call(source_repository.split("@")[0], DokkuProvider.DOKKU_REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.remote_git_add.assert_any_call(source_repository.split("@")[0], DokkuProvider.DOKKU_REMOTE_NAME,
+                                                     "dokku@dev.com:myapp")
         self.git_exec.git_push.assert_any_call(source_repository.split("@")[0], DokkuProvider.DOKKU_REMOTE_NAME,
                                                source_repository.split("@")[1], "master")
 
@@ -61,7 +66,8 @@ class DokkuTest(unittest.TestCase):
 
         source_repository = "."
         self._deploy_and_validate_app_create_by_source(source_repository)
-        self.git_exec.remote_git_add.assert_any_call(source_repository, DokkuProvider.DOKKU_REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.remote_git_add.assert_any_call(source_repository, DokkuProvider.DOKKU_REMOTE_NAME,
+                                                     "dokku@dev.com:myapp")
         self.git_exec.git_push.assert_any_call(source_repository, DokkuProvider.DOKKU_REMOTE_NAME, "develop", "master")
 
     @patch('ndeploy.utils.create_temp_directory')
@@ -75,11 +81,13 @@ class DokkuTest(unittest.TestCase):
         self._deploy_and_validate_app_create_by_source(source_repository)
         mock_create_temp_directory.assert_any_call(prefix=self.app.name)
         self.git_exec.git_clone_from.assert_any_call(repository, source_full_path, branch_name)
-        self.git_exec.remote_git_add.assert_any_call(source_full_path, DokkuProvider.DOKKU_REMOTE_NAME, "dokku@dev.com:myapp")
+        self.git_exec.remote_git_add.assert_any_call(source_full_path, DokkuProvider.DOKKU_REMOTE_NAME,
+                                                     "dokku@dev.com:myapp")
         self.git_exec.git_push.assert_any_call(source_full_path, DokkuProvider.DOKKU_REMOTE_NAME, branch_name, "master")
 
     @patch('ndeploy.utils.get_temp_dir_app_if_exists')
-    def test_when_have_local_cache_of_the_remote_repository_the_source_must_be_updated_to_deploy(self, mock_get_temp_dir):
+    def test_when_have_local_cache_of_the_remote_repository_the_source_must_be_updated_to_deploy(self,
+                                                                                                 mock_get_temp_dir):
         branch_name = "master"
         source_repository = "https://git.nexx.com/utils/ndeploy.git@{branch_name}".format(branch_name=branch_name)
         self.git_exec.get_current_branch_name.return_value = branch_name

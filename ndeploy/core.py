@@ -22,7 +22,8 @@ class NDeployCore:
         """
         Adiciona e salva um novo Environment.
         Args:
-            type: Tipo de ambiente, relacionado a ferramenta Paas a qual os dados do ambiente se refere, ex.: dokku, openshift, heroku, etc.
+            type: Tipo de ambiente, relacionado a ferramenta Paas a qual os dados do ambiente se refere, ex.: dokku,
+                  openshift, heroku, etc.
             name: Nome do Environment, ex.: dev, qa, stage, production, etc.
             deploy_host: Host de acesso a ferramenta Paas onde é realizado o deploy.
             app_deployment_file_url: Template usado para baixar arquivo de configuração da aplicação a ser deployada.
@@ -106,4 +107,3 @@ class NDeployCore:
 
         """
         self.deployer.undeploy(name, group, environment)
-

@@ -9,7 +9,7 @@ before_script:
 # Roda testes unitários de python.
 .unit-test: &unit-test
     script:
-    - pip install -r requirements.txt
+    - make init
     - make test
 
 unit test:
@@ -20,6 +20,13 @@ unit test:
        paths:
        - reports
        expire_in: 10min
+
+code convention:
+    stage: code-analysis
+    tags: [python-351]
+    script:
+    - make init
+    - make code-convention
 
 metrics:
     stage: code-analysis

@@ -1,10 +1,11 @@
 .PHONY: all test clean
 
-test:
+init:
 	pip install -r requirements.txt
+
+test:
 	pytest
 
 code-convention:
-	pip install -r requirements.txt
 	flake8
 	pycodestyle

@@ -1,6 +1,8 @@
-import unittest, os
-from ndeploy.env_var_resolver import EnvVarResolver
+import os
+import unittest
 from unittest.mock import MagicMock, Mock
+
+from ndeploy.env_var_resolver import EnvVarResolver
 from ndeploy.exception import InvalidVarTypeError
 
 
@@ -52,4 +54,3 @@ class EnvVarResolverTest(unittest.TestCase):
     def test_raise_exception_if_cant_parse_var(self):
         with self.assertRaises(InvalidVarTypeError):
             self.resolver.resolve_vars({"var": "{invalid:jnk}"}, MagicMock(), dict())
-

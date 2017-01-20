@@ -52,6 +52,3 @@ class EnvironmentTest(unittest.TestCase):
     def test_undeploy_should_call_deployer(self):
         self.core.undeploy("name", "group", "environment")
         self.deployer.undeploy.assert_called_once_with("name", "group", "environment")
-
-
-

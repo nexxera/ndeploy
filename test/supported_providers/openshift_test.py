@@ -71,7 +71,8 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.openshift_exec.assert_any_call(
             "expose service/myapp --hostname=myapp-mygroup.dev.com")
         self.openshift.openshift_exec.assert_any_call(
-            """patch route myapp -p '{"spec": {"tls": {"termination": "edge", "insecureEdgeTerminationPolicy": "Redirect"}}}'"""
+            "patch route myapp -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
+            "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'"
             )
 
     def test_should_not_expose_service_if_exist(self):
@@ -180,4 +181,3 @@ class OpenShiftTest(unittest.TestCase):
 
     def _configure_openshift_exec(self):
         self.openshift.openshift_exec = MagicMock(return_value=(None, ""))
-
