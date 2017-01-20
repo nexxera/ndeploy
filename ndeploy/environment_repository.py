@@ -137,7 +137,7 @@ class EnvironmentRepository:
             return "There is no registered environment."
 
         result = "\n".join("name:%s, \ttype:%s, \tdeploy_host:%s"
-                  % (env.name, env.type, env.deploy_host) for env in environments)
+                           % (env.name, env.type, env.deploy_host) for env in environments)
 
         return result
 
@@ -195,7 +195,7 @@ class EnvironmentRepository:
             os.makedirs(self.get_ndeploy_dir())
 
         with open(self.get_environments_file(), 'w+') as fp:
-            json_data = json.dumps(self.environments, default=lambda o: o.__dict__);
+            json_data = json.dumps(self.environments, default=lambda o: o.__dict__)
             fp.write(json_data)
             fp.close()
 
@@ -223,4 +223,3 @@ class EnvironmentRepository:
             str containing full path of environments.json file
         """
         return os.path.join(self.get_ndeploy_dir(), "environments.json")
-

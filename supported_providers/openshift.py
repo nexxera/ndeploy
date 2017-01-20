@@ -222,7 +222,8 @@ class OpenshiftProvider(AbstractProvider):
         self.openshift_exec(cmd)
 
         print("...Patching route to enable tls")
-        patch_cmd = """patch route %s -p '{"spec": {"tls": {"termination": "edge", "insecureEdgeTerminationPolicy": "Redirect"}}}'""" \
+        patch_cmd = "patch route %s -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", " \
+                    "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" \
                     % self.app.deploy_name
         self.openshift_exec(patch_cmd)
 
@@ -414,8 +415,8 @@ class OpenshiftProvider(AbstractProvider):
 
         """
         project = self.get_openshift_area_name()
-        return self.shell_exec.execute_program("oc {cmd} {project}"
-            .format(cmd=oc_cmd, project="-n " + project if append_project != "" else ""), True)
+        return self.shell_exec.execute_program(
+            "oc {cmd} {project}".format(cmd=oc_cmd, project="-n " + project if append_project != "" else ""), True)
 
     def oc_return_error(self, cmd, append_project=True):
         """
@@ -462,7 +463,8 @@ class OpenshiftProvider(AbstractProvider):
 
     def get_openshift_area_name(self):
         """
-        Returns the current openshift project name(it must be lowercase, because openshift cant handle upper case namespaces)
+        Returns the current openshift project name(it must be lowercase, because openshift cant handle upper
+        case namespaces)
         By now the project name will be the env.name. In sgslebs/ndeploy the project
         name will be the name of the user executing ndeploy
         or 'area' option passed in command line.

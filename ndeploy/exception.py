@@ -45,7 +45,8 @@ class BadFormedRemoteConfigUrlError(NDeployError):
         return "Could not parse the app deployment file url for environment {env}. " \
                "\nCurrent url: {url}" \
                "\nUrl should be GIT_REPO GIT_BRANCH RELATIVE_JSON_PATH" \
-               "\nExample: git@git.nexxera.com/conf-qa/{{group}}.git develop {{name}}.json".format(env=self.env, url=self.url)
+               "\nExample: git@git.nexxera.com/conf-qa/{{group}}.git develop {{name}}.json".format(env=self.env,
+                                                                                                   url=self.url)
 
 
 class EnvironmentAlreadyExistsError(NDeployError):
@@ -83,6 +84,7 @@ class InvalidVarTypeError(NDeployError):
         return "Could not parse var type with name {}" \
             .format(self.var_name)
 
+
 class InvalidEnvironmentJsonError(NDeployError):
     """
     Exception thrown when there's a bad formatation in json config file
@@ -95,4 +97,3 @@ class InvalidEnvironmentJsonError(NDeployError):
         return "Theres something wrong with json file {file} " \
                "\nERROR: {error}" \
             .format(file=self.json_file, error=self.error)
-

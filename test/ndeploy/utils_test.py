@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from ndeploy.utils import *
+from ndeploy.utils import get_temp_dir_app_if_exists, create_temp_directory, rmtree
 
 
 class UtilsTest(unittest.TestCase):

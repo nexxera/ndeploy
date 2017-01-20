@@ -9,7 +9,6 @@ from ndeploy.env_var_resolver import EnvVarResolver
 from ndeploy.shell_exec import ShellExec
 from ndeploy.git_exec import GitExec
 
-
 """
 Services que são carregados para que possam ser invocado no processo de deploy.
 Todo método anotado com @service é carregado neste dicionário com o nome informado no decorador.
@@ -21,13 +20,16 @@ def service(name):
     """
     Decorador usado para identificar os métodos que carregam serviços durante o processo de deploy.
     Args:
-        name: Nome do service. Usado apartir do valor informado no campo "env_vars", ex.: DATABASE_URL = service:postgres, postgres será o nome do service.
+        name: Nome do service. Usado apartir do valor informado no campo "env_vars", ex.:
+              DATABASE_URL = service:postgres, postgres será o nome do service.
 
     Returns: Wrap
 
     """
+
     def wrap(func):
         services[name] = func
+
     return wrap
 
 
@@ -46,7 +48,8 @@ class AbstractProvider:
     @abstractmethod
     def deploy_by_git_push(self, app, env):
         """
-        Método usado para realização de deploy através de git push no diretório informado em app.repository ou do diretório corrente.
+        Método usado para realização de deploy através de git push no diretório informado em app.repository
+        ou do diretório corrente.
 
         Args:
             app: Objeto App com os dados que serão usados para o deploy.
@@ -92,7 +95,7 @@ class AbstractProvider:
         Returns:
 
         """
-        assert self.shell_exec # shell_exec should exist at this point
+        assert self.shell_exec  # shell_exec should exist at this point
 
         print("...Beginning deploy on %s" % env.type)
         print("Environment name: %s" % env.name)
@@ -222,4 +225,3 @@ class ProviderRepository:
                     new_provider.set_git_exec(GitExec())
                     _available_providers[cls.__type__] = new_provider
         return _available_providers
-

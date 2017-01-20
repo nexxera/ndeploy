@@ -173,7 +173,3 @@ class EnvVarResolver:
             "syntax error in app variable " + ":".join(parsed_var)
         assert parsed_var[0] == 'app'
         return self.provider.app_url(parsed_var[1])
-
-
-
-

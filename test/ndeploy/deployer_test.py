@@ -66,7 +66,7 @@ class DeployerTest(unittest.TestCase):
 
     @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
     def test_deploy_with_group_name_and_registered_env(self, _get_remote_conf):
-        _get_remote_conf.return_value = {"name": "app", "group":"group", "deploy_name": "financial"}
+        _get_remote_conf.return_value = {"name": "app", "group": "group", "deploy_name": "financial"}
         self._configure_env("qa", "qa.nexxera.com", "openshift",
                             "git@git.nexxera.com:environment-conf-qa/{group}.git master {name}.json")
         self.deployer.deploy(group="financial-platform", name="financial-platform-core",
