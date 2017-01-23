@@ -11,6 +11,7 @@ class Deployer:
     Class responsible for resolving the deploy configurations and
     delegating to a provider to do deploy.
     """
+    NDEPLOY_TEMPLATE_FILE = 'ndeploy.json'
 
     def __init__(self, provider_repository, env_repository):
         """
@@ -21,6 +22,7 @@ class Deployer:
         """
         self.provider_repository = provider_repository
         self.env_repository = env_repository
+        self._app_data_template = None
 
     def deploy(self, file=None, group=None, name=None, environment=None):
         """
@@ -43,12 +45,13 @@ class Deployer:
                                        "the local file path with --file arg or remotely"
                                        "using --group and --name args")
 
-        app_data = None
+        self._load_template_ndeploy_file()
 
+        app_data = None
         if file:
             app_data = self._resolve_environment_file(file)
-        env, app, provider = \
-            self._resolve_app_env_and_provider(environment, group, name, app_data)
+
+        env, app, provider = self._resolve_app_env_and_provider(environment, group, name, app_data)
 
         provider.deploy(app, env)
 
@@ -127,9 +130,7 @@ class Deployer:
         else:
             print("...Successfully downloaded remote app config file")
 
-        app_data = self._resolve_environment_file(cloned_file)
-
-        return app_data
+        return cloned_file
 
     def _resolve_remote_app_file(self, group, name, environment):
         """
@@ -150,10 +151,9 @@ class Deployer:
         assert group
 
         rsa_key = self.env_repository.get_env_private_key_path(environment.name)
-        repo_url, branch, file_relative_path = \
-            environment.format_remote_deployment_file_url(group, name)
-        app_data = self._get_remote_conf(repo_url, branch,
-                                         file_relative_path, rsa_key)
+        repo_url, branch, file_relative_path = environment.format_remote_deployment_file_url(group, name)
+        cloned_file = self._get_remote_conf(repo_url, branch, file_relative_path, rsa_key)
+        app_data = self._resolve_environment_file(cloned_file)
 
         return app_data
 
@@ -207,22 +207,57 @@ class Deployer:
                                    "Either pass an environment in app "
                                    "config file or explicitly in 'ndeploy deploy' command")
 
-    @staticmethod
-    def _resolve_environment_file(json_file):
+    def _load_file_to_dict(self, file):
         """
-        Resolves json environment config file and return a dict with json items
+        Load config file and return a dict with items
 
         Args:
-            json_file (file): json configuration file
-
+            file: json configuration file
         Returns:
             dict with json_file items
         """
         try:
-            with open(json_file) as json_data:
+            with open(file) as json_data:
                 app_json = json.load(json_data)
-                # if '' in app_json['env_vars'].values():
-                #     raise InvalidEnvironmentJsonError(json_file, 'Empty variable')
                 return app_json
         except ValueError as e:
-            raise InvalidEnvironmentJsonError(json_file, e)
+            raise InvalidEnvironmentJsonError(self.NDEPLOY_TEMPLATE_FILE, e)
+
+    def _load_template_ndeploy_file(self):
+        """
+        Load local template file ndeploy
+
+        """
+        if os.path.exists(self.NDEPLOY_TEMPLATE_FILE):
+            self._app_data_template = self._load_file_to_dict(self.NDEPLOY_TEMPLATE_FILE)
+
+    def _resolve_environment_file(self, file):
+        """
+        Resolves json environment config file, local and remote, and return a dict with json items
+
+        Args:
+            file: json configuration file
+
+        Returns:
+            dict with json_file items
+        """
+        app_data_load = self._load_file_to_dict(file)
+
+        if self._app_data_template:
+            return self._merge_template_and_remote_files(self._app_data_template, app_data_load)
+
+        return app_data_load
+
+    @staticmethod
+    def _merge_template_and_remote_files(app_data_template, app_data_load):
+        """
+        Merge template file settings and remote settings
+
+        Args:
+            app_data_template: template ndeploy.json local
+            app_data_load: json file remote
+
+        Returns:
+            dict with settings merge
+        """
+        return (lambda f=app_data_template.copy(): (f.update(app_data_load), f)[1])()
