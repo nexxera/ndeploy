@@ -207,7 +207,8 @@ class Deployer:
                                    "Either pass an environment in app "
                                    "config file or explicitly in 'ndeploy deploy' command")
 
-    def _load_file_to_dict(self, file):
+    @staticmethod
+    def _load_file_to_dict(file):
         """
         Load config file and return a dict with items
 
@@ -221,7 +222,7 @@ class Deployer:
                 app_json = json.load(json_data)
                 return app_json
         except ValueError as e:
-            raise InvalidEnvironmentJsonError(self.NDEPLOY_TEMPLATE_FILE, e)
+            raise InvalidEnvironmentJsonError(file, e)
 
     def _load_template_ndeploy_file(self):
         """

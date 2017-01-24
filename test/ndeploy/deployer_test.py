@@ -3,7 +3,7 @@ import os
 import json
 from unittest import mock
 
-from ndeploy.exception import InvalidArgumentError, BadFormedRemoteConfigUrlError
+from ndeploy.exception import InvalidArgumentError, BadFormedRemoteConfigUrlError, InvalidEnvironmentJsonError
 from ndeploy.deployer import Deployer
 from ndeploy.model import Environment
 
@@ -118,7 +118,6 @@ class DeployerTest(unittest.TestCase):
             self, mock_get_remote_conf, mock_load_template_ndeploy_file, mock_os_exists):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
         mock_os_exists.return_value = True
-        mock_load_template_ndeploy_file = mock.MagicMock()
         self.deployer._app_data_template = self._load_json_to_dict(local_file)
 
         remote_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_remote.json')
@@ -130,6 +129,14 @@ class DeployerTest(unittest.TestCase):
         self.deployer.deploy(group="platform", name="platform-core", environment="qa")
         self._assert_deploy_call(remote_data_config["name"], remote_data_config["deploy_name"],
                                  "qa", "qa.nexx.com", "openshift")
+
+    @mock.patch("os.path.exists")
+    def test_deploy_should_raise_exception_if_invalid_json_file(self, mock_template_ndeploy):
+        mock_template_ndeploy.return_value = False
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'invalid_json.json')
+        with self.assertRaises(InvalidEnvironmentJsonError):
+            self._configure_env("qa", "qa.nexxera.com", "openshift", None)
+            self.deployer.deploy(file=local_file, environment="qa")
 
     # -----------------------  Helpers  ---------------------------------
 
