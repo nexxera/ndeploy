@@ -229,36 +229,48 @@ class Deployer:
         Load local template file ndeploy
 
         """
-        if os.path.exists(self.NDEPLOY_TEMPLATE_FILE):
-            self._app_data_template = self._load_file_to_dict(self.NDEPLOY_TEMPLATE_FILE)
+        cwd = os.getcwd() + os.sep
+        full_path_template = "{0}{1}".format(cwd, self.NDEPLOY_TEMPLATE_FILE)
+        if os.path.exists(full_path_template):
+            self._app_data_template = self._load_file_to_dict(full_path_template)
 
     def _resolve_environment_file(self, file):
         """
-        Resolves json environment config file, local and remote, and return a dict with json items
+        Resolves environment config file, local and remote, and return a dict with file items
 
         Args:
-            file: json configuration file
+            file: configuration file
 
         Returns:
-            dict with json_file items
+            dict with file items
         """
         app_data_load = self._load_file_to_dict(file)
 
         if self._app_data_template:
-            return self._merge_template_and_remote_files(self._app_data_template, app_data_load)
+            print("...Merge local settings with remote...")
+            return self._deep_merge_two_dict(self._app_data_template, app_data_load)
 
         return app_data_load
 
-    @staticmethod
-    def _merge_template_and_remote_files(app_data_template, app_data_load):
+    def _deep_merge_two_dict(self, dict1, dict2, in_conflict=lambda v1, v2: v2):
+        # http://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
         """
-        Merge template file settings and remote settings
+        Merge dict2 into dict1, using in_conflict function to resolve the leaf conflicts
 
         Args:
-            app_data_template: template ndeploy.json local
-            app_data_load: json file remote
+            dict1: dictionary initial
+            dict2: dictionary to merge
 
         Returns:
-            dict with settings merge
+            new merged dict
         """
-        return (lambda f=app_data_template.copy(): (f.update(app_data_load), f)[1])()
+
+        for k in dict2:
+            if k in dict1:
+                if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
+                    self._deep_merge_two_dict(dict1[k], dict2[k], in_conflict)
+                elif dict1[k] != dict2[k]:
+                    dict1[k] = in_conflict(dict1[k], dict2[k])
+            else:
+                dict1[k] = dict2[k]
+        return dict1
