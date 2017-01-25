@@ -253,7 +253,6 @@ class Deployer:
         return app_data_load
 
     def _deep_merge_two_dict(self, dict1, dict2, in_conflict=lambda v1, v2: v2):
-        # http://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
         """
         Merge dict2 into dict1, using in_conflict function to resolve the leaf conflicts
 
