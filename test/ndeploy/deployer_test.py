@@ -3,7 +3,7 @@ import os
 import json
 from unittest import mock
 
-from ndeploy.exception import InvalidArgumentError, BadFormedRemoteConfigUrlError
+from ndeploy.exception import InvalidArgumentError, BadFormedRemoteConfigUrlError, InvalidEnvironmentJsonError
 from ndeploy.deployer import Deployer
 from ndeploy.model import Environment
 
@@ -66,13 +66,17 @@ class DeployerTest(unittest.TestCase):
 
     @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
     def test_deploy_with_group_name_and_registered_env(self, _get_remote_conf):
-        _get_remote_conf.return_value = {"name": "app", "group": "group", "deploy_name": "financial"}
-        self._configure_env("qa", "qa.nexxera.com", "openshift",
-                            "git@git.nexxera.com:environment-conf-qa/{group}.git master {name}.json")
-        self.deployer.deploy(group="financial-platform", name="financial-platform-core",
-                             environment="qa")
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_with_env.json')
+        _get_remote_conf.return_value = local_file
+        self._configure_env("dev", "dev.nexxera.com", "dokku",
+                            "git@git.nexxera.com:environment-conf-dev/{group}.git master {name}.json")
+        self.deployer.deploy(group="financial-platform", name="financial-platform-core", environment="dev")
 
-        self._assert_deploy_call("app", "financial", "qa", "qa.nexxera.com", "openshift")
+        data_config = self._load_json_to_dict(local_file)
+        self._assert_deploy_call(data_config["name"], data_config["deploy_name"],
+                                 data_config["environment"]["name"],
+                                 data_config["environment"]["deploy_host"],
+                                 data_config["environment"]["type"])
 
     @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
     def test_should_raise_exception_if_remote_app_url_is_bad_formed(self, _get_remote_conf):
@@ -93,19 +97,48 @@ class DeployerTest(unittest.TestCase):
         self.deployer.undeploy("app", "group", "qa")
         self._assert_undeploy_call("app", "app", "qa", "qa.nexxera.com", "openshift")
 
-    def test_should_be_deploy_with_empty_environment_variable(self):
+    def test_deploy_should_be_with_empty_environment_variable(self):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_with_variable_empty.json')
         self._configure_env("qa", "qa.nexx.com", "openshift", None)
 
         self.deployer.deploy(file=local_file, environment="qa")
         self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexx.com", "openshift")
 
-    def test_should_be_deploy_without_environment_variable(self):
+    def test_deploy_should_be_without_environment_variable(self):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_without_variable.json')
         self._configure_env("qa", "qa.nexx.com", "openshift", None)
 
         self.deployer.deploy(file=local_file, environment="qa")
         self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexx.com", "openshift")
+
+    @mock.patch("os.path.exists")
+    @mock.patch("ndeploy.deployer.Deployer._load_template_ndeploy_file")
+    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
+    def test_deploy_should_be_possible_to_merge_the_local_template_with_remote_settings(
+            self, mock_get_remote_conf, mock_load_template_ndeploy_file, mock_os_exists):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
+        mock_os_exists.return_value = True
+        self.deployer._app_data_template = self._load_json_to_dict(local_file)
+
+        remote_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_remote.json')
+        mock_get_remote_conf.return_value = remote_file
+        remote_data_config = self._load_json_to_dict(remote_file)
+
+        self._configure_env("qa", "qa.nexx.com", "openshift",
+                            "git@git.nexx.com:environment-conf-qa/{group}.git master {name}.json")
+        self.deployer.deploy(group="platform", name="platform-core", environment="qa")
+        self._assert_deploy_call(remote_data_config["name"], remote_data_config["deploy_name"],
+                                 "qa", "qa.nexx.com", "openshift")
+
+    @mock.patch("os.path.exists")
+    def test_deploy_should_raise_exception_if_invalid_json_file(self, mock_template_ndeploy):
+        mock_template_ndeploy.return_value = False
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'invalid_json.json')
+        with self.assertRaises(InvalidEnvironmentJsonError):
+            self._configure_env("qa", "qa.nexxera.com", "openshift", None)
+            self.deployer.deploy(file=local_file, environment="qa")
+
+    # -----------------------  Helpers  ---------------------------------
 
     def _assert_undeploy_call(self, expected_app_name, expected_app_deploy_name,
                               expected_env_name, expected_env_deploy_host, expected_env_type):
@@ -137,6 +170,10 @@ class DeployerTest(unittest.TestCase):
         self.assertEqual(expected_type, env.type)
 
     def _assert_json(self, _dict, json_file):
+        loaded_dict = self._load_json_to_dict(json_file)
+        self.assertEqual(loaded_dict, _dict)
+
+    @staticmethod
+    def _load_json_to_dict(json_file):
         with open(json_file) as json_data:
-            loaded_dict = json.load(json_data)
-            self.assertEqual(loaded_dict, _dict)
+            return json.load(json_data)

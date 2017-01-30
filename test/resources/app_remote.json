@@ -1,0 +1,10 @@
+{
+  "name": "super-app-new",
+  "deploy_name": "super-app-new",
+  "env_vars": {
+    "APP_ENV": "Production",
+    "APP_NOTIFICATION_URL": "{app:notification}",
+    "DATABASE_URL": "oracle://teste:teste@DEV",
+    "URL_OPEN_ID": "http://openid.com"
+  }
+}
