@@ -39,13 +39,13 @@ O NDploy é uma ferramenta implementada em **Python** (3.5.1), e para sua instal
 Para instalar o NDeploy basta executar o comando:
 
 ```
-pip install git@https://github.com/nexxera/ndeploy.git 
+pip install git+https://github.com/nexxera/ndeploy.git 
 ```
 
 # **Como atualizar o NDeploy**
 
 ```
-pip install --upgrade git@https://github.com/nexxera/ndeploy.git
+pip install --upgrade git+https://github.com/nexxera/ndeploy.git
 ```
 
 # **Como alterar o código**
