@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: test all
 .DEFAULT_GOAL := test
 
 init:
@@ -12,7 +12,7 @@ code-convention:
 	pycodestyle
 
 clean:
-	rm -rf dist ndeploy.egg-info build
+	rm -rf dist ndeploy.egg-info build reports
 
 release: clean
 	python setup.py sdist bdist_wheel
@@ -20,4 +20,4 @@ release: clean
 upload: release
 	twine upload dist/*
 
-all : init test code-convention clean release upload
+all : init code-convention clean release
