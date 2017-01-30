@@ -9,7 +9,7 @@ setup(
     packages=['ndeploy', 'supported_providers', 'ndeploy_cli'],
     install_requires=install_requires,
     dependency_links=[],
-    version='0.0.1',
+    version='1.0.0',
     url='https://github.com/nexxera/ndeploy',
     download_url='https://github.com/nexxera/ndeploy',
     author='isaac.souza',
