@@ -51,9 +51,12 @@ class Deployer:
         if file:
             app_data = self._resolve_environment_file(file)
 
-        env, app, provider = self._resolve_app_env_and_provider(environment, group, name, app_data)
-
-        provider.deploy(app, env)
+        if app_data and 'apps' in app_data:
+            for app in app_data['apps']:
+                app["environment"] = app_data.get("environment", None)
+                self._deploy(environment, group, name, app)
+        else:
+            self._deploy(environment, group, name, app_data)
 
     def undeploy(self, name, group, environment):
         """
@@ -70,6 +73,11 @@ class Deployer:
                                                {"name": name, "group": group})
 
         provider.undeploy(app, env)
+
+    def _deploy(self, environment, group, name, app_data):
+        env, app, provider = self._resolve_app_env_and_provider(environment, group, name, app_data)
+
+        provider.deploy(app, env)
 
     def _resolve_app_env_and_provider(self, env_name, group, app_name, app_data=None):
         """

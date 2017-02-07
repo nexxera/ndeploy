@@ -23,7 +23,6 @@ class DeployerTest(unittest.TestCase):
             self.deployer.deploy(os.path.join(os.path.dirname(__file__), '../resources', 'app.json'))
 
     def test_deploy_should_fail_if_invalid_environment_is_passed(self):
-
         with self.assertRaises(expected_exception=InvalidArgumentError):
             self.env_repo.has_environment.side_effect = lambda e: e != "invalid"
             self.deployer.deploy(file=os.path.join(os.path.dirname(__file__), '../resources', 'app.json'),
@@ -45,12 +44,6 @@ class DeployerTest(unittest.TestCase):
 
         self.deployer.deploy(file=local_file)
         self._assert_deploy_call("my-app", "super-app", "dev", "dev.nexxera.com", "dokku")
-
-    def _configure_env(self, name, host, _type, url):
-        self.env_repo.has_environment.side_effect = \
-            lambda n: n == name
-        self.env_repo.load_environment.side_effect = \
-            lambda n: Environment(_type, name, host, url) if n == name else None
 
     def test_deploy_with_file_and_registered_env(self):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
@@ -138,7 +131,33 @@ class DeployerTest(unittest.TestCase):
             self._configure_env("qa", "qa.nexxera.com", "openshift", None)
             self.deployer.deploy(file=local_file, environment="qa")
 
+    def test_deploy_should_accept_n_apps_in_config_file(self):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps.json')
+        self._configure_env("dev", "dev.nexxera.com", "openshift",
+                            "git@git.nexxera.com:environment-conf-dev/{group}.git master {name}.json")
+
+        self.deployer.deploy(file=local_file, environment="dev")
+
+        self.assertEqual(2, self.mocked_provider.deploy.call_count)
+        self._assert_deploy_call_list(0, "my-app", "super-my-app", "dev", "dev.nexxera.com", "openshift")
+        self._assert_deploy_call_list(1, "other-app", "super-other-app", "dev", "dev.nexxera.com", "openshift")
+
+    def test_deploy_should_accept_n_apps_in_config_file_with_env(self):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps_with_env.json')
+
+        self.deployer.deploy(file=local_file)
+
+        self.assertEqual(2, self.mocked_provider.deploy.call_count)
+        self._assert_deploy_call_list(0, "my-app", "super-my-app", "dev", "dev.nexxera.com", "dokku")
+        self._assert_deploy_call_list(1, "other-app", "super-other-app", "dev", "dev.nexxera.com", "dokku")
+
     # -----------------------  Helpers  ---------------------------------
+
+    def _configure_env(self, name, host, _type, url):
+        self.env_repo.has_environment.side_effect = \
+            lambda n: n == name
+        self.env_repo.load_environment.side_effect = \
+            lambda n: Environment(_type, name, host, url) if n == name else None
 
     def _assert_undeploy_call(self, expected_app_name, expected_app_deploy_name,
                               expected_env_name, expected_env_deploy_host, expected_env_type):
@@ -157,6 +176,14 @@ class DeployerTest(unittest.TestCase):
 
         app_called = self.mocked_provider.deploy.call_args[0][0]
         env_called = self.mocked_provider.deploy.call_args[0][1]
+        self._assertApp(expected_app_name, expected_app_deploy_name, app_called)
+        self._assertEnv(expected_env_name, expected_env_deploy_host, expected_env_type, env_called)
+
+    def _assert_deploy_call_list(self, index_call_args, expected_app_name, expected_app_deploy_name,
+                                 expected_env_name, expected_env_deploy_host, expected_env_type):
+        call_args = self.mocked_provider.deploy.call_args_list[index_call_args]
+        app_called = call_args[0][0]
+        env_called = call_args[0][1]
         self._assertApp(expected_app_name, expected_app_deploy_name, app_called)
         self._assertEnv(expected_env_name, expected_env_deploy_host, expected_env_type, env_called)
 
