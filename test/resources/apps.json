@@ -1,7 +1,4 @@
 {
-  "globals": {
-    "EMAIL_HOST": "smtp.myhost.com"
-  },
   "apps": [
     {
       "name": "my-app",

@@ -52,7 +52,8 @@ class Deployer:
             app_data = self._resolve_environment_file(file)
 
         if app_data and 'apps' in app_data:
-            for app in app_data['apps']:
+            for index, app in enumerate(app_data['apps'], start=1):
+                print("...Deploy the application {}/{}...".format(index, len(app_data['apps'])))
                 app["environment"] = app_data.get("environment", None)
                 self._deploy(environment, group, name, app)
         else:
