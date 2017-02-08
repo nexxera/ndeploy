@@ -151,6 +151,30 @@ class DeployerTest(unittest.TestCase):
         self._assert_deploy_call_list(0, "my-app", "super-my-app", "dev", "dev.nexxera.com", "dokku")
         self._assert_deploy_call_list(1, "other-app", "super-other-app", "dev", "dev.nexxera.com", "dokku")
 
+    @mock.patch("os.path.exists")
+    @mock.patch("ndeploy.deployer.Deployer._load_template_ndeploy_file")
+    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
+    def test_deploy_should_be_possible_to_merge_the_local_template_with_remote_settings_from_n_apps(
+            self, mock_get_remote_conf, mock_load_template_ndeploy_file, mock_os_exists):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps.json')
+        mock_os_exists.return_value = True
+        self.deployer._app_data_template = self._load_json_to_dict(local_file)
+
+        remote_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps_remote.json')
+        mock_get_remote_conf.return_value = remote_file
+        remote_data_config = self._load_json_to_dict(remote_file)
+
+        self._configure_env("qa", "qa.nexx.com", "openshift",
+                            "git@git.nexx.com:environment-conf-qa/{group}.git master {name}.json")
+        self.deployer.deploy(group="platform", name="platform-core", environment="qa")
+        self.assertEqual(2, self.mocked_provider.deploy.call_count)
+        expected_app1 = remote_data_config["apps"][0]
+        expected_app2 = remote_data_config["apps"][1]
+        self._assert_deploy_call_list(0, expected_app1["name"], expected_app1["deploy_name"],
+                                      "qa", "qa.nexx.com", "openshift")
+        self._assert_deploy_call_list(1, expected_app2["name"], expected_app2["deploy_name"],
+                                      "qa", "qa.nexx.com", "openshift")
+
     # -----------------------  Helpers  ---------------------------------
 
     def _configure_env(self, name, host, _type, url):

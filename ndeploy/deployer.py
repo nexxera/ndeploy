@@ -26,9 +26,9 @@ class Deployer:
 
     def deploy(self, file=None, group=None, name=None, environment=None):
         """
-        Resolves the user parameters and deploys an app in an environment.
+        Resolves the user parameters and deploys apps in an environment.
 
-        The app configuration will be resolved locally if `file` parameter
+        The apps configuration will be resolved locally if `file` parameter
         was passed or in a remote git repository with the url configured
         in the environment (@see ndeploy.model.Environment.app_deployment_file_url)
 
@@ -38,7 +38,7 @@ class Deployer:
             file (str): path to the local json configuration file
             group (str): app group
             name (str): app name
-            environment (str): environment name where the app will be deployed
+            environment (str): environment name where the apps will be deployed
         """
         if not file and (not group or not name):
             raise InvalidArgumentError("Could not resolve the app json file. Either pass "
@@ -47,17 +47,14 @@ class Deployer:
 
         self._load_template_ndeploy_file()
 
-        app_data = None
-        if file:
-            app_data = self._resolve_environment_file(file)
+        env, data_in_json = self._resolve_apps_data_and_env(file, group, name, environment)
 
-        if app_data and 'apps' in app_data:
-            for index, app in enumerate(app_data['apps'], start=1):
-                print("...Deploy the application {}/{}...".format(index, len(app_data['apps'])))
-                app["environment"] = app_data.get("environment", None)
-                self._deploy(environment, group, name, app)
+        if data_in_json and 'apps' in data_in_json:
+            for index, item_data in enumerate(data_in_json['apps'], start=1):
+                print("...Deploy the application {}/{}...".format(index, len(data_in_json['apps'])))
+                self._deploy(env, item_data, group, name)
         else:
-            self._deploy(environment, group, name, app_data)
+            self._deploy(env, data_in_json, group, name)
 
     def undeploy(self, name, group, environment):
         """
@@ -75,35 +72,66 @@ class Deployer:
 
         provider.undeploy(app, env)
 
-    def _deploy(self, environment, group, name, app_data):
-        env, app, provider = self._resolve_app_env_and_provider(environment, group, name, app_data)
+    def _deploy(self, env, item_data, group, app_name):
+        """
+        Deploy an application session
 
+        Args:
+            env (class): Environment for deploy
+            item_data (dict): dict containing app data from existing file
+            group (str): app group name
+            app_name (str): app name
+        """
+        app, provider = self._resolve_app_and_provider(env, group, app_name, item_data)
         provider.deploy(app, env)
 
-    def _resolve_app_env_and_provider(self, env_name, group, app_name, app_data=None):
+    def _resolve_apps_data_and_env(self, file, group, app_name, env_name):
         """
         Resolves the app, env and provider object for this deploy/undeploy session
 
         Args:
+            file: app configuration file
+            group (str): app group name
+            app_name (str): app name
             env_name (str): environment name
+
+        Returns:
+           Tuple containing (Environment, App)
+
+        """
+        apps_data = None
+        if file:
+            apps_data = self._resolve_environment_file(file)
+
+        env = self._resolve_environment(apps_data, env_name)
+        assert env is not None
+
+        if not apps_data:
+            apps_data = self._resolve_remote_app_file(group, app_name, env)
+        assert apps_data is not None
+
+        return env, apps_data
+
+    def _resolve_app_and_provider(self, env, group, app_name, app_data):
+        """
+        Resolves the app, env and provider object for this deploy/undeploy session
+
+        Args:
+            env (class): Environment for deploy
             group (str): app group name
             app_name (str): app name
             app_data (dict): dict containing app data from existing file (optional)
 
         Returns:
             Tuple containing (Environment, App, AbstractProvider)
-
         """
-        env = self._resolve_environment(app_data, env_name)
-        assert env is not None
-
         app = self._resolve_app(app_data, group, app_name, env)
         assert app is not None
 
-        provider = self.provider_repository.get_provider_for(env.type)
+        provider = self._resolve_provider(env)
         assert provider is not None
 
-        return env, app, provider
+        return app, provider
 
     def _get_remote_conf(self, repo_url, branch, file_relative_path, rsa_path):
         """
@@ -141,7 +169,7 @@ class Deployer:
 
         return cloned_file
 
-    def _resolve_remote_app_file(self, group, name, environment):
+    def _resolve_remote_app_file(self, group, name, env):
         """
         Resolves the remote app configuration file.
         Will download from a git repository configured in the environment.
@@ -150,23 +178,23 @@ class Deployer:
         Args:
             group (str): the app group
             name (str): the app name
-            environment (str): the environment name
+            env (class): Environment for deploy
 
         Returns:
             dict containing the contents of remote configuration json
 
         """
-        assert environment
+        assert env
         assert group
 
-        rsa_key = self.env_repository.get_env_private_key_path(environment.name)
-        repo_url, branch, file_relative_path = environment.format_remote_deployment_file_url(group, name)
+        rsa_key = self.env_repository.get_env_private_key_path(env.name)
+        repo_url, branch, file_relative_path = env.format_remote_deployment_file_url(group, name)
         cloned_file = self._get_remote_conf(repo_url, branch, file_relative_path, rsa_key)
         app_data = self._resolve_environment_file(cloned_file)
 
         return app_data
 
-    def _resolve_app(self, app_data, group, name, environment):
+    def _resolve_app(self, app_data, group, name, env):
         """
         Resolves the app deploy configuration locally or remotely.
         Will try to resolve remotely (in a git repo) only if `app_data` is None
@@ -175,14 +203,14 @@ class Deployer:
             app_data (dict): the app data (if None will try to get remotely)
             group (str): the app group name (will be used only if `app_data` is None)
             name (str): the app name (will be used only if `app_data` is None)
-            environment (str): environment name (will be used only if `app_data` is None)
+            env (class): Environment for deploy
 
         Returns:
             ndeploy.model.App object
 
         """
         if not app_data:
-            app_data = self._resolve_remote_app_file(group, name, environment)
+            app_data = self._resolve_remote_app_file(group, name, env)
 
         assert app_data
 
@@ -190,6 +218,19 @@ class Deployer:
             app_data.pop("environment")
 
         return App(**app_data)
+
+    def _resolve_provider(self, env):
+        """
+        Resolves the provider deploy configuration and returns an instance
+
+        Args:
+            env (class): Environment for deploy
+
+        Returns:
+            implementation ndeploy.provider.AbstractProvider object
+
+        """
+        return self.provider_repository.get_provider_for(env.type)
 
     def _resolve_environment(self, app_data, environment):
         """
@@ -235,7 +276,7 @@ class Deployer:
 
     def _load_template_ndeploy_file(self):
         """
-        Load local template file ndeploy
+        Load local template file ndeploy.json
 
         """
         cwd = os.getcwd() + os.sep
@@ -245,7 +286,8 @@ class Deployer:
 
     def _resolve_environment_file(self, file):
         """
-        Resolves environment config file, local and remote, and return a dict with file items
+        Resolves environment config file, template local ndeploy.json and parameter file,
+        and return a dict with file items
 
         Args:
             file: configuration file
