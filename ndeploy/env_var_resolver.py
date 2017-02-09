@@ -77,7 +77,7 @@ class EnvVarResolver:
                                      .replace("}", "")
                                      .split(":"))
 
-        formatted_value = re.sub("\{.*?\}", replace_func, value)
+        formatted_value = re.sub("\{[env|service|app]\B.*?\}", replace_func, value)
 
         return formatted_value
 

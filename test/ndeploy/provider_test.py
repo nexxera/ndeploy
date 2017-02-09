@@ -56,6 +56,8 @@ class AssembleModelTest(unittest.TestCase):
             TESTE="Oi teste",
             APP_NOTIFICATION_URL="http://notification.com",
             DATABASE_URL="postgres://user:senha@localhost:5432/teste",
-            URL_OPEN_ID="http://www.teste.com")
+            URL_OPEN_ID="http://www.teste.com",
+            SCHEDULER="{\"hour\": \"*/10\"}"
+        )
 
         self.assertEqual(app.env_vars, env_vars)
