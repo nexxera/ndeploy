@@ -90,11 +90,13 @@ def deploy(**kwargs):
 
 
 @ndeploy.command()
+@click.option('-f', '--file', help="App deployment file")
 @click.option('-g', '--group', help="Group name of project.", prompt="App group")
 @click.option('-n', '--name', help="Name project.", prompt="App name")
 @click.option('-e', '--environment', help="Environment configured.", prompt="Environment name")
 def undeploy(**kwargs):
-    ndeploy_core.undeploy(group=kwargs['group'],
+    ndeploy_core.undeploy(file=kwargs['file'],
+                          group=kwargs['group'],
                           name=kwargs['name'],
                           environment=kwargs['environment'])
 

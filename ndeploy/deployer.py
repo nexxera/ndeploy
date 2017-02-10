@@ -47,30 +47,46 @@ class Deployer:
 
         self._load_template_ndeploy_file()
 
-        env, data_in_json = self._resolve_apps_data_and_env(file, group, name, environment)
+        self._exec_deploy_or_undeploy(self._deploy, file, group, name, environment)
 
-        if data_in_json and 'apps' in data_in_json:
-            for index, item_data in enumerate(data_in_json['apps'], start=1):
-                print("...Deploy the application {}/{}...".format(index, len(data_in_json['apps'])))
-                self._deploy(env, item_data, group, name)
-        else:
-            self._deploy(env, data_in_json, group, name)
-
-    def undeploy(self, name, group, environment):
+    def undeploy(self, file=None, name=None, group=None, environment=None):
         """
         Undeploys the app with `name` and `group` from `environment`
 
         Args:
+            file (str): path to the local json configuration file
             name (str): the app name
             group (str): the app group name
             environment (str): the environment name
 
         """
-        env, app, provider = \
-            self._resolve_app_env_and_provider(environment, group, name,
-                                               {"name": name, "group": group})
+        if not file and (not group or not name):
+            raise InvalidArgumentError("Could not resolve the app json file. Either pass "
+                                       "the local file path with --file arg or remotely"
+                                       "using --group and --name args")
 
-        provider.undeploy(app, env)
+        self._exec_deploy_or_undeploy(self._undeploy, file, group, name, environment)
+
+    def _exec_deploy_or_undeploy(self, undeploy_deploy_callback, file, group, name, environment):
+        """
+        Execute the flow needed to undeploy or deploy the applications
+        The actual undeploy or deploy must be done by the 'undeploy_deploy_callback'
+
+        Args:
+            undeploy_deploy_callback (fn): function that makes the undeploy or deploy
+            file (str): path to the local json configuration file
+            group (str): the app group name
+            name (str): the app name
+            environment (str): the environment name
+        """
+        env, data_in_json = self._resolve_apps_data_and_env(file, group, name, environment)
+
+        if data_in_json and 'apps' in data_in_json:
+            for index, item_data in enumerate(data_in_json['apps'], start=1):
+                print("...Application {}/{}...".format(index, len(data_in_json['apps'])))
+                undeploy_deploy_callback(env, item_data, group, name)
+        else:
+            undeploy_deploy_callback(env, data_in_json, group, name)
 
     def _deploy(self, env, item_data, group, app_name):
         """
@@ -84,6 +100,19 @@ class Deployer:
         """
         app, provider = self._resolve_app_and_provider(env, group, app_name, item_data)
         provider.deploy(app, env)
+
+    def _undeploy(self, env, item_data, group, name):
+        """
+        Undeploy an application session
+
+        Args:
+            env (class): Environment for deploy
+            item_data (dict): dict containing app data from existing file
+            group (str): app group name
+            app_name (str): app name
+        """
+        app, provider = self._resolve_app_and_provider(env, group, name, item_data)
+        provider.undeploy(app, env)
 
     def _resolve_apps_data_and_env(self, file, group, app_name, env_name):
         """

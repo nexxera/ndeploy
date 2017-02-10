@@ -83,12 +83,36 @@ class DeployerTest(unittest.TestCase):
     def test_undeploy_from_invalid_env_should_fail(self):
         self.env_repo.has_environment.side_effect = lambda e: e != "invalid"
         with self.assertRaises(InvalidArgumentError):
-            self.deployer.undeploy("app", "group", "invalid")
+            self.deployer.undeploy(name="app", group="group", environment="invalid")
 
-    def test_undeploy_should_call_correct_provider_to_undeploy(self):
-        self._configure_env("qa", "qa.nexxera.com", "openshift", None)
-        self.deployer.undeploy("app", "group", "qa")
-        self._assert_undeploy_call("app", "app", "qa", "qa.nexxera.com", "openshift")
+    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
+    def test_undeploy_should_call_correct_provider_to_undeploy(self, mock_get_remote_conf):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
+        mock_get_remote_conf.return_value = local_file
+
+        self._configure_env("qa", "qa.nexxera.com", "openshift",
+                            "git@git.nexxera.com:environment-conf-qa/{group}.git master {name}.json")
+        self.deployer.undeploy(name="app", group="group", environment="qa")
+        self._assert_undeploy_call("my-app", "super-app", "qa", "qa.nexxera.com", "openshift")
+
+    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
+    def test_undeploy_should_accept_n_apps_in_config_file(self, mock_get_remote_conf):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps.json')
+        mock_get_remote_conf.return_value = local_file
+
+        self._configure_env("dev", "dev.nexxera.com", "openshift",
+                            "git@git.nexxera.com:environment-conf-dev/{group}.git master {name}.json")
+
+        self.deployer.undeploy(name="app", group="group", environment="dev")
+        self.assertEqual(2, self.mocked_provider.undeploy.call_count)
+        self._assert_undeploy_call_list(0, "my-app", "super-my-app", "dev", "dev.nexxera.com", "openshift")
+        self._assert_undeploy_call_list(1, "other-app", "super-other-app", "dev", "dev.nexxera.com", "openshift")
+
+    def test_undeploy_should_accept_local_config_file_with_env(self):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_with_env.json')
+
+        self.deployer.undeploy(file=local_file)
+        self._assert_undeploy_call("my-app", "super-app", "dev", "dev.nexxera.com", "dokku")
 
     def test_deploy_should_be_with_empty_environment_variable(self):
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_with_variable_empty.json')
@@ -206,6 +230,14 @@ class DeployerTest(unittest.TestCase):
     def _assert_deploy_call_list(self, index_call_args, expected_app_name, expected_app_deploy_name,
                                  expected_env_name, expected_env_deploy_host, expected_env_type):
         call_args = self.mocked_provider.deploy.call_args_list[index_call_args]
+        app_called = call_args[0][0]
+        env_called = call_args[0][1]
+        self._assertApp(expected_app_name, expected_app_deploy_name, app_called)
+        self._assertEnv(expected_env_name, expected_env_deploy_host, expected_env_type, env_called)
+
+    def _assert_undeploy_call_list(self, index_call_args, expected_app_name, expected_app_deploy_name,
+                                   expected_env_name, expected_env_deploy_host, expected_env_type):
+        call_args = self.mocked_provider.undeploy.call_args_list[index_call_args]
         app_called = call_args[0][0]
         env_called = call_args[0][1]
         self._assertApp(expected_app_name, expected_app_deploy_name, app_called)
