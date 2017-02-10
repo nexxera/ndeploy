@@ -1,0 +1,29 @@
+{
+  "apps": [
+    {
+      "name": "remote-my-app",
+      "group": "my-group",
+      "deploy_name": "remote-super-my-app",
+      "deploy_group": "my-group",
+      "repository": "git@gitlab.nexxera.com:group/my-app.git",
+      "image": "gitlab-dreg.nexxera.com/group/my-app",
+      "env_vars": {
+        "APP_ENV": "Development",
+        "DATABASE_URL": "postgres"
+      }
+    },
+    {
+      "name": "remote-other-app",
+      "group": "other-group",
+      "deploy_name": "remote-super-other-app",
+      "deploy_group": "other-group",
+      "repository": "git@gitlab.nexxera.com:group/other-app.git",
+      "image": "gitlab-dreg.nexxera.com/group/other-app",
+      "env_vars": {
+        "APP_ENV": "Development",
+        "DATABASE_URL": "postgres://teste:senha@localhost/teste",
+        "URL_OPEN_ID": "http://www.openid.com"
+      }
+    }
+  ]
+}
