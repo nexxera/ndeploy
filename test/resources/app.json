@@ -9,7 +9,8 @@
     "TESTE": "Oi {env:BLA}",
     "APP_NOTIFICATION_URL": "{app:notification}",
     "DATABASE_URL": "{service:postgres:teste}",
-    "URL_OPEN_ID": "http://www.teste.com"
+    "URL_OPEN_ID": "http://www.teste.com",
+    "SCHEDULER": "{\"hour\": \"*/10\"}"
   }
 }
 

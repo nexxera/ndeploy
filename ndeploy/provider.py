@@ -169,7 +169,7 @@ class AbstractProvider:
             str containing the formatted values
 
         """
-        env_vars_as_str = ' '.join('{}="{}"'.format(k, v)
+        env_vars_as_str = ' '.join('{}="{}"'.format(k, str(v).replace('\"', '\\"'))
                                    for k, v in sorted(env_vars.items()))
         return env_vars_as_str
 

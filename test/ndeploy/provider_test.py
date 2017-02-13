@@ -56,6 +56,16 @@ class AssembleModelTest(unittest.TestCase):
             TESTE="Oi teste",
             APP_NOTIFICATION_URL="http://notification.com",
             DATABASE_URL="postgres://user:senha@localhost:5432/teste",
-            URL_OPEN_ID="http://www.teste.com")
+            URL_OPEN_ID="http://www.teste.com",
+            SCHEDULER="{\"hour\": \"*/10\"}"
+        )
 
         self.assertEqual(app.env_vars, env_vars)
+
+    def test_should_be_possible_resolve_env_vars(self):
+        provider = MockProvider()
+        env_vars = {'MAKLM': 'kjsa', 'APP_ENV': 'Development', 'SCHEDULER': '{"hour": "*/23"}'}
+        env_vars_formated = provider.prepare_env_vars(env_vars)
+
+        string_expected = 'APP_ENV="Development" MAKLM="kjsa" SCHEDULER="{\\"hour\\": \\"*/23\\"}"'
+        self.assertEqual(env_vars_formated, string_expected)
