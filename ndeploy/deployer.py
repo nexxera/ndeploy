@@ -28,9 +28,8 @@ class Deployer:
         self.provider_repository = provider_repository
         self.env_repository = env_repository
         self._app_data_template = None
-        self._config_file_format = None
 
-    def deploy(self, file=None, group=None, name=None, environment=None, **kwargs):
+    def deploy(self, file=None, group=None, name=None, environment=None):
         """
         Resolves the user parameters and deploys apps in an environment.
 
@@ -51,12 +50,11 @@ class Deployer:
                                        "the local file path with --file arg or remotely"
                                        "using --group and --name args")
 
-        self._config_file_format = kwargs.get("input")
         self._load_template_ndeploy_file()
 
         self._exec_deploy_or_undeploy(self._deploy, file, group, name, environment)
 
-    def undeploy(self, file=None, name=None, group=None, environment=None, **kwargs):
+    def undeploy(self, file=None, name=None, group=None, environment=None):
         """
         Undeploys the app with `name` and `group` from `environment`
 
@@ -71,8 +69,6 @@ class Deployer:
             raise InvalidArgumentError("Could not resolve the app json file. Either pass "
                                        "the local file path with --file arg or remotely"
                                        "using --group and --name args")
-
-        self._config_file_format = kwargs.get("input") 
 
         self._exec_deploy_or_undeploy(self._undeploy, file, group, name, environment)
 
@@ -118,7 +114,7 @@ class Deployer:
             env (class): Environment for deploy
             item_data (dict): dict containing app data from existing file
             group (str): app group name
-            app_name (str): app name
+            name (str): app name
         """
         app, provider = self._resolve_app_and_provider(env, group, name, item_data)
         provider.undeploy(app, env)
@@ -171,22 +167,6 @@ class Deployer:
 
         return app, provider
 
-    def _resolve_file_extension_remote_config(self, file_name_and_extension):
-        """
-        Override the extension when the input parameter is informed
-
-        Args:
-            file_name_and_extension (str): file name and file extension
-
-        Returns:
-            string containing the contents of the remote config file override
-        """
-        if self._config_file_format is not None and self._config_file_format in self.CONFIG_FILE_FORMAT_SUPPORTED:
-            file_name = file_name_and_extension.split('.')[0]
-            file_name_and_extension = '{}.{}'.format(file_name, self._config_file_format)
-
-        return file_name_and_extension
-
     def _get_remote_conf(self, repo_url, branch, file_relative_path, rsa_path):
         """
         Gets the remote app configuration file in a git repository
@@ -209,20 +189,26 @@ class Deployer:
 
         print("...Getting remote app config file from " + repo_url)
 
-        file_relative_path = self._resolve_file_extension_remote_config(file_relative_path)
+        def exec_git_clone_file(rsa_path, repo_url, branch, local_folder, file_relative_path):
+            ShellExec.execute_program("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
+                                      "{branch} {file_relative_path} | tar -x -C {local_folder}'"
+                                      .format(rsa_path=rsa_path, repo_url=repo_url,
+                                              branch=branch, local_folder=local_folder,
+                                              file_relative_path=file_relative_path), True)
+            cloned_file = os.path.join(local_folder, file_relative_path)
+            if not os.path.isfile(cloned_file):
+                raise AppConfigFileCloneError(repo_url, cloned_file)
+            return cloned_file
 
-        ShellExec.execute_program("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
-                                  "{branch} {file_relative_path} | tar -x -C {local_folder}'"
-                                  .format(rsa_path=rsa_path, repo_url=repo_url,
-                                          branch=branch, local_folder=local_folder,
-                                          file_relative_path=file_relative_path), True)
+        try:
+            cloned_file = exec_git_clone_file(rsa_path, repo_url, branch, local_folder, file_relative_path)
+        except AppConfigFileCloneError:
+            file_name, file_extension = file_relative_path.split('.')
+            new_file_extension = 'yaml' if file_extension == 'json' else 'json'
+            file_relative_path = '{}.{}'.format(file_name, new_file_extension)
+            cloned_file = exec_git_clone_file(rsa_path, repo_url, branch, local_folder, file_relative_path)
 
-        cloned_file = os.path.join(local_folder, file_relative_path)
-        if not os.path.isfile(cloned_file):
-            raise AppConfigFileCloneError(repo_url, cloned_file)
-        else:
-            print("...Successfully downloaded remote app config file")
-
+        print("...Successfully downloaded remote app config file")
         return cloned_file
 
     def _resolve_remote_app_file(self, group, name, env):

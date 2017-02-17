@@ -74,7 +74,6 @@ def keyenv(**kwargs):
 @click.option('-g', '--group', help="Group name of project")
 @click.option('-n', '--name', help="Project name")
 @click.option('-e', '--environment', help="Environment name")
-@click.option('-i', '--input', help="Input file format to overwrite")
 def deploy(**kwargs):
     try:
         ndeploy_core.deploy(**kwargs)
@@ -91,7 +90,6 @@ def deploy(**kwargs):
 @click.option('-g', '--group', help="Group name of project.", prompt="App group")
 @click.option('-n', '--name', help="Name project.", prompt="App name")
 @click.option('-e', '--environment', help="Environment configured.", prompt="Environment name")
-@click.option('-i', '--input', help="Input file format to overwrite")
 def undeploy(**kwargs):
     ndeploy_core.undeploy(**kwargs)
 
