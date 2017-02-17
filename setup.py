@@ -1,7 +1,7 @@
 from setuptools import setup
 
 
-install_requires = ["click==6.6", "timeout-decorator==0.3.2", "GitPython==2.1.1"]
+install_requires = ["click==6.6", "timeout-decorator==0.3.2", "GitPython==2.1.1", "PyYAML==3.12"]
 
 setup(
     name='ndeploy',
@@ -21,6 +21,7 @@ setup(
     },
     classifiers=[
         "Topic :: Utilities",
+        "Operating System :: Unix",
         "Programming Language :: Python",
         'Programming Language :: Python :: 3'
     ],

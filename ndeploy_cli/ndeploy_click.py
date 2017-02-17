@@ -74,13 +74,10 @@ def keyenv(**kwargs):
 @click.option('-g', '--group', help="Group name of project")
 @click.option('-n', '--name', help="Project name")
 @click.option('-e', '--environment', help="Environment name")
+@click.option('-i', '--input', help="Input file format to overwrite")
 def deploy(**kwargs):
-
     try:
-        ndeploy_core.deploy(file=kwargs['file'],
-                            group=kwargs['group'],
-                            name=kwargs['name'],
-                            environment=kwargs['environment'])
+        ndeploy_core.deploy(**kwargs)
     except NDeployError as e:
         print(e)
         raise click.Abort()
@@ -94,11 +91,9 @@ def deploy(**kwargs):
 @click.option('-g', '--group', help="Group name of project.", prompt="App group")
 @click.option('-n', '--name', help="Name project.", prompt="App name")
 @click.option('-e', '--environment', help="Environment configured.", prompt="Environment name")
+@click.option('-i', '--input', help="Input file format to overwrite")
 def undeploy(**kwargs):
-    ndeploy_core.undeploy(file=kwargs['file'],
-                          group=kwargs['group'],
-                          name=kwargs['name'],
-                          environment=kwargs['environment'])
+    ndeploy_core.undeploy(**kwargs)
 
 
 if __name__ == '__main__':

@@ -1,9 +1,13 @@
 import json
 import os.path
+
+import yaml
+from yaml.parser import ParserError
+
 from ndeploy.shell_exec import ShellExec
 from ndeploy.model import App, Environment
 from ndeploy.exception import InvalidArgumentError, \
-    AppConfigFileCloneError, InvalidEnvironmentJsonError
+    AppConfigFileCloneError, InvalidEnvironmentFileError
 
 
 class Deployer:
@@ -11,7 +15,8 @@ class Deployer:
     Class responsible for resolving the deploy configurations and
     delegating to a provider to do deploy.
     """
-    NDEPLOY_TEMPLATE_FILE = 'ndeploy.json'
+    NDEPLOY_TEMPLATE_FILE = 'ndeploy'
+    CONFIG_FILE_FORMAT_SUPPORTED = ['json', 'yaml']
 
     def __init__(self, provider_repository, env_repository):
         """
@@ -23,8 +28,9 @@ class Deployer:
         self.provider_repository = provider_repository
         self.env_repository = env_repository
         self._app_data_template = None
+        self._config_file_format = None
 
-    def deploy(self, file=None, group=None, name=None, environment=None):
+    def deploy(self, file=None, group=None, name=None, environment=None, **kwargs):
         """
         Resolves the user parameters and deploys apps in an environment.
 
@@ -45,11 +51,12 @@ class Deployer:
                                        "the local file path with --file arg or remotely"
                                        "using --group and --name args")
 
+        self._config_file_format = kwargs.get("input")
         self._load_template_ndeploy_file()
 
         self._exec_deploy_or_undeploy(self._deploy, file, group, name, environment)
 
-    def undeploy(self, file=None, name=None, group=None, environment=None):
+    def undeploy(self, file=None, name=None, group=None, environment=None, **kwargs):
         """
         Undeploys the app with `name` and `group` from `environment`
 
@@ -64,6 +71,8 @@ class Deployer:
             raise InvalidArgumentError("Could not resolve the app json file. Either pass "
                                        "the local file path with --file arg or remotely"
                                        "using --group and --name args")
+
+        self._config_file_format = kwargs.get("input") 
 
         self._exec_deploy_or_undeploy(self._undeploy, file, group, name, environment)
 
@@ -162,6 +171,22 @@ class Deployer:
 
         return app, provider
 
+    def _resolve_file_extension_remote_config(self, file_name_and_extension):
+        """
+        Override the extension when the input parameter is informed
+
+        Args:
+            file_name_and_extension (str): file name and file extension
+
+        Returns:
+            string containing the contents of the remote config file override
+        """
+        if self._config_file_format is not None and self._config_file_format in self.CONFIG_FILE_FORMAT_SUPPORTED:
+            file_name = file_name_and_extension.split('.')[0]
+            file_name_and_extension = '{}.{}'.format(file_name, self._config_file_format)
+
+        return file_name_and_extension
+
     def _get_remote_conf(self, repo_url, branch, file_relative_path, rsa_path):
         """
         Gets the remote app configuration file in a git repository
@@ -173,7 +198,7 @@ class Deployer:
             rsa_path (str): path to the repo rsa private key
 
         Returns:
-            dict containing the contents of the remote json file
+            dict containing the contents of the remote config file
 
         """
         local_folder = os.path.join(
@@ -183,6 +208,8 @@ class Deployer:
             os.makedirs(local_folder)
 
         print("...Getting remote app config file from " + repo_url)
+
+        file_relative_path = self._resolve_file_extension_remote_config(file_relative_path)
 
         ShellExec.execute_program("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
                                   "{branch} {file_relative_path} | tar -x -C {local_folder}'"
@@ -292,16 +319,22 @@ class Deployer:
         Load config file and return a dict with items
 
         Args:
-            file: json configuration file
+            file: configuration file json, yaml
         Returns:
-            dict with json_file items
+            dict with file items
         """
         try:
-            with open(file) as json_data:
-                app_json = json.load(json_data)
-                return app_json
-        except ValueError as e:
-            raise InvalidEnvironmentJsonError(file, e)
+            with open(file) as content_data:
+                if content_data.name.endswith(".json"):
+                    config_data = json.load(content_data)
+                elif content_data.name.endswith(".yaml"):
+                    config_data = yaml.load(content_data)
+                else:
+                    raise ValueError("Invalid config file format")
+
+                return config_data
+        except (ValueError, ParserError) as e:
+            raise InvalidEnvironmentFileError(file, e)
 
     def _load_template_ndeploy_file(self):
         """
@@ -310,8 +343,10 @@ class Deployer:
         """
         cwd = os.getcwd() + os.sep
         full_path_template = "{0}{1}".format(cwd, self.NDEPLOY_TEMPLATE_FILE)
-        if os.path.exists(full_path_template):
-            self._app_data_template = self._load_file_to_dict(full_path_template)
+        if os.path.exists('{}.json'.format(full_path_template)):
+            self._app_data_template = self._load_file_to_dict('{}.json'.format(full_path_template))
+        elif os.path.exists('{}.yaml'.format(full_path_template)):
+            self._app_data_template = self._load_file_to_dict('{}.yaml'.format(full_path_template))
 
     def _resolve_environment_file(self, file):
         """

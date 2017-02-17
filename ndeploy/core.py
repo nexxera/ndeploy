@@ -84,7 +84,7 @@ class NDeployCore:
         """
         return self.environment_repository.get_environment_key(name)
 
-    def deploy(self, file=None, group=None, name=None, environment=None):
+    def deploy(self, file=None, group=None, name=None, environment=None, **kwargs):
         """
         Faz o deploy de uma aplicação.
         Args:
@@ -94,7 +94,7 @@ class NDeployCore:
             environment: nome do environment onde será feita o deploy.
 
         """
-        self.deployer.deploy(file, group, name, environment)
+        self.deployer.deploy(file, group, name, environment, **kwargs)
 
     def undeploy(self, file=None, name=None, group=None, environment=None):
         """
