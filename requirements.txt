@@ -1,6 +1,7 @@
 GitPython==2.1.1
 timeout-decorator==0.3.2
 click==6.6
+pyyaml==3.12
 pytest
 pytest-cov
 flake8

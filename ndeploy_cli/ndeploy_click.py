@@ -75,12 +75,8 @@ def keyenv(**kwargs):
 @click.option('-n', '--name', help="Project name")
 @click.option('-e', '--environment', help="Environment name")
 def deploy(**kwargs):
-
     try:
-        ndeploy_core.deploy(file=kwargs['file'],
-                            group=kwargs['group'],
-                            name=kwargs['name'],
-                            environment=kwargs['environment'])
+        ndeploy_core.deploy(**kwargs)
     except NDeployError as e:
         print(e)
         raise click.Abort()
@@ -95,10 +91,7 @@ def deploy(**kwargs):
 @click.option('-n', '--name', help="Name project.", prompt="App name")
 @click.option('-e', '--environment', help="Environment configured.", prompt="Environment name")
 def undeploy(**kwargs):
-    ndeploy_core.undeploy(file=kwargs['file'],
-                          group=kwargs['group'],
-                          name=kwargs['name'],
-                          environment=kwargs['environment'])
+    ndeploy_core.undeploy(**kwargs)
 
 
 if __name__ == '__main__':
