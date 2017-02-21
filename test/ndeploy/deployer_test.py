@@ -3,7 +3,7 @@ import os
 import json
 from unittest import mock
 
-from ndeploy.exception import InvalidArgumentError, BadFormedRemoteConfigUrlError, InvalidEnvironmentJsonError
+from ndeploy.exception import InvalidArgumentError, BadFormedRemoteConfigUrlError, InvalidEnvironmentFileError
 from ndeploy.deployer import Deployer
 from ndeploy.model import Environment
 
@@ -19,14 +19,16 @@ class DeployerTest(unittest.TestCase):
         self.provider_repo.get_provider_for.return_value = self.mocked_provider
 
     def test_deploy_should_fail_if_no_environment_is_passed(self):
-        with self.assertRaises(expected_exception=InvalidArgumentError):
-            self.deployer.deploy(os.path.join(os.path.dirname(__file__), '../resources', 'app.json'))
+        for file in ['app.json', 'app.yaml']:
+            with self.assertRaises(expected_exception=InvalidArgumentError):
+                self.deployer.deploy(os.path.join(os.path.dirname(__file__), '../resources', file))
 
     def test_deploy_should_fail_if_invalid_environment_is_passed(self):
-        with self.assertRaises(expected_exception=InvalidArgumentError):
-            self.env_repo.has_environment.side_effect = lambda e: e != "invalid"
-            self.deployer.deploy(file=os.path.join(os.path.dirname(__file__), '../resources', 'app.json'),
-                                 environment="invalid")
+        for file in ['app.json', 'app.yaml']:
+            with self.assertRaises(expected_exception=InvalidArgumentError):
+                self.env_repo.has_environment.side_effect = lambda e: e != "invalid"
+                self.deployer.deploy(file=os.path.join(os.path.dirname(__file__), '../resources', file),
+                                     environment="invalid")
 
     def test_deploy_should_fail_if_file_group_and_name_is_not_passed(self):
         with self.assertRaises(expected_exception=InvalidArgumentError):
@@ -151,7 +153,7 @@ class DeployerTest(unittest.TestCase):
     def test_deploy_should_raise_exception_if_invalid_json_file(self, mock_template_ndeploy):
         mock_template_ndeploy.return_value = False
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'invalid_json.json')
-        with self.assertRaises(InvalidEnvironmentJsonError):
+        with self.assertRaises(InvalidEnvironmentFileError):
             self._configure_env("qa", "qa.nexxera.com", "openshift", None)
             self.deployer.deploy(file=local_file, environment="qa")
 
@@ -198,6 +200,13 @@ class DeployerTest(unittest.TestCase):
                                       "qa", "qa.nexx.com", "openshift")
         self._assert_deploy_call_list(1, expected_app2["name"], expected_app2["deploy_name"],
                                       "qa", "qa.nexx.com", "openshift")
+
+    @mock.patch("os.path.exists")
+    def test_deploy_should_raise_exception_if_invalid_yaml_file(self, mock_template_ndeploy):
+        mock_template_ndeploy.return_value = False
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'invalid_yaml.yaml')
+        with self.assertRaises(InvalidEnvironmentFileError):
+            self.deployer.deploy(file=local_file, environment="qa")
 
     # -----------------------  Helpers  ---------------------------------
 

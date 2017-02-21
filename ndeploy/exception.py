@@ -44,7 +44,7 @@ class BadFormedRemoteConfigUrlError(NDeployError):
     def __str__(self):
         return "Could not parse the app deployment file url for environment {env}. " \
                "\nCurrent url: {url}" \
-               "\nUrl should be GIT_REPO GIT_BRANCH RELATIVE_JSON_PATH" \
+               "\nUrl should be GIT_REPO GIT_BRANCH RELATIVE_CONFIG_FILE_PATH" \
                "\nExample: git@git.nexxera.com/conf-qa/{{group}}.git develop {{name}}.json".format(env=self.env,
                                                                                                    url=self.url)
 
@@ -85,15 +85,15 @@ class InvalidVarTypeError(NDeployError):
             .format(self.var_name)
 
 
-class InvalidEnvironmentJsonError(NDeployError):
+class InvalidEnvironmentFileError(NDeployError):
     """
-    Exception thrown when there's a bad formatation in json config file
+    Exception thrown when there's a bad formatation in config file
     """
-    def __init__(self, json_file, error):
-        self.json_file = json_file
+    def __init__(self, config_file, error):
+        self.config_file = config_file
         self.error = error
 
     def __str__(self):
-        return "Theres something wrong with json file {file} " \
+        return "Theres something wrong with config file {file} " \
                "\nERROR: {error}" \
-            .format(file=self.json_file, error=self.error)
+            .format(file=self.config_file, error=self.error)

@@ -15,8 +15,8 @@ Abaixo segue a lista de possíveis formas de utilização:
 O NDeploy possibilita ao usuário informar o ambiente no qual será realizado o deploy das seguintes formas:
 
 - Dados via linha de comando: na execução do ndeploy o usuário informa os dados do ambiente no qual será realizado o deploy.
-- Dados no arquivo json de deployment: no arquivo json é possível definir os dados do ambiente onde será relizado o deploy, desta forma é possível que
-esses dados possam ser versionados junto com o projeto. É indicado um arquivo de deployment para cada ambiente.
+- Dados no arquivo de deployment: no arquivo de configuração é possível definir os dados do ambiente onde será relizado o deploy, desta forma é possível que
+esses dados possam ser versionados junto com o projeto. É indicado um arquivo de deployment para cada ambiente. Os formatos suportados para esses arquivos é json e yaml.
 - Cadastramento do ambiente na ferramenta: Através de comandos na ferramenta, é possível incluir ambientes que serão persistidos no diretório $HOME do usuário,
 esses ambientes ganham um nome e no momento da execução do deploy deve ser informado o nome do ambiente que deve ser usado.
 
@@ -93,7 +93,7 @@ paver coverage
     
     - Comando: ndeploy deploy -f multiple-apps-env.yaml
 
-# **Descrição dos campos do arquivo json**
+# **Descrição dos campos do arquivo de configuração**
 | **Campo** | **Obrigatório** | **Descrição** | **Default** |
 |---------|:---------:|---------------------------|----------------------------|
 | name | sim | Nome da aplicação, que deve ser o mesmo nome da aplicação no repositório git. | -- |
