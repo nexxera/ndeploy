@@ -1,0 +1,25 @@
+apps:
+  - name: "my-app"
+    deploy_name: "super-app"
+    repository: "git@gitlab.nexxera.com:group/my-app.git"
+    image: "gitlab-dreg.nexxera.com/group/my-app"
+    env_vars:
+      APP_ENV: "Development"
+      EMAIL_HOST: "EMAIL_HOST"
+      APP_NOTIFICATION_URL: "app:notification"
+      DATABASE_URL: "oracle://teste:senha@TST"
+      URL_OPEN_ID: "http://www.teste.com"
+
+  - name: "other-app"
+    repository: "git@gitlab.nexxera.com:group/my-app.git"
+    image: "gitlab-dreg.nexxera.com/group/my-app"
+    env_vars:
+      APP_ENV: "Development"
+      EMAIL_HOST: "EMAIL_HOST"
+      DATABASE_URL: "postgres://teste:senha@localhost/teste"
+      URL_OPEN_ID: "http://www.teste.com"
+
+environment:
+  name: "test"
+  type: "openshift"
+  deploy_host: "cloudint.nexxera.com"

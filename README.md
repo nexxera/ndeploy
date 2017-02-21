@@ -73,17 +73,25 @@ paver coverage
 
 - [Deploy de uma única aplicação, contendo os dados do ambiente pra deploy.](docs/json_examples/simgle-app-env.json)
 
-    - Comando: ndeploy deploy -f app.json
+    - Comando: ndeploy deploy -f simgle-app-env.json
 
 - [Deploy de uma única aplicação, informando dados do ambiente via linha de comando.](docs/json_examples/simgle-app.json)
 
-    - Comando: ndeploy deploy -f app.json -h dev.nexxera.com -t dokku
+    - Comando: ndeploy deploy -f simgle-app.json -h dev.nexxera.com -t dokku
 
 - [Deploy de uma única aplicação, informando o ambiente via linha de comando.](docs/json_examples/simgle-app.json)
 
     É necessário ter cadastrado o ambiente, através do comando: ndeploy addenv
-    - Comando: ndeploy deploy -f app.json -e dev
+    - Comando: ndeploy deploy -f simgle-app.json -e dev
+
+- [Deploy de várias aplicações, informando o ambiente via linha de comando.](docs/json_examples/multiple-apps.json)
+
+    É necessário ter cadastrado o ambiente, através do comando: ndeploy addenv
+    - Comando: ndeploy deploy -f multiple-apps.json -e dev
+
+- [Deploy de várias aplicações, contendo os dados do ambiente pra deploy.](docs/json_examples/multiple-apps-env.yaml)
     
+    - Comando: ndeploy deploy -f multiple-apps-env.yaml
 
 # **Descrição dos campos do arquivo json**
 | **Campo** | **Obrigatório** | **Descrição** | **Default** |
