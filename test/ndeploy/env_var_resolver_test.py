@@ -3,7 +3,6 @@ import unittest
 from unittest.mock import MagicMock, Mock
 
 from ndeploy.env_var_resolver import EnvVarResolver
-from ndeploy.exception import InvalidVarTypeError
 
 
 class EnvVarResolverTest(unittest.TestCase):
@@ -50,7 +49,3 @@ class EnvVarResolverTest(unittest.TestCase):
         resolved = self.resolver.resolve_vars({"var": "{app:ping}"}, paas, dict())
         self.assertEqual(len(resolved), 1)
         self.assertEqual("192.168.136.12", resolved["var"])
-
-    def test_raise_exception_if_cant_parse_var(self):
-        with self.assertRaises(InvalidVarTypeError):
-            self.resolver.resolve_vars({"var": "{invalid:jnk}"}, MagicMock(), dict())

@@ -71,13 +71,13 @@ class EnvVarResolver:
             The processed value
 
         """
-        def replace_func(match):
-            return self._resolve_var(match.group(0)
-                                     .replace("{", "")
-                                     .replace("}", "")
-                                     .split(":"))
+        if not isinstance(value, (str, bytes)):
+            return value
 
-        formatted_value = re.sub("\{[env|service|app]\B.*?\}", replace_func, value)
+        def replace_func(match: str):
+            return self._resolve_var(match.group(0).replace("{", "").replace("}", "").split(":"))
+
+        formatted_value = re.sub("\{(env|service|app):.*?\}", replace_func, value)
 
         return formatted_value
 
