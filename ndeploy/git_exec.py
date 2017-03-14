@@ -1,3 +1,6 @@
+import io
+import tarfile
+
 import git
 
 from ndeploy.exception import NDeployError
@@ -140,3 +143,35 @@ class GitExec:
             return repo.active_branch.name
         except git.NoSuchPathError:
             raise GitNoSuchPathError(repo_app_full_path)
+
+    @staticmethod
+    def archive_clone(rsa_path, repo_url, branch, local_folder, file_relative_path):
+        """
+        Clone a git repository file
+
+        Args:
+            rsa_path (str): path to the repo rsa private key
+            repo_url (str): the remote repo url
+            branch (str): git branch name
+            local_folder (str): the path of the dir to the clone
+            file_relative_path (str): the path of the file relative to the repo root
+
+        Returns:
+            full path for the cloned file
+        """
+        try:
+            cmd_archive_clone = ["git", "archive", "--remote={repo_url}".format(repo_url=repo_url),
+                                 branch, file_relative_path]
+            g = git.Git()
+            ssh_executable = 'ssh -i {rsa_path}'.format(rsa_path=rsa_path)
+            with g.custom_environment(GIT_SSH_COMMAND=ssh_executable):
+                out = g.execute(command=cmd_archive_clone)
+                with io.BytesIO(bytearray(map(ord, out))) as f:
+                    with tarfile.open(fileobj=f) as tar:
+                        tar.extractall(members=None, path=local_folder)
+
+            return '{}/{}'.format(local_folder, file_relative_path)
+        except git.GitCommandError as e:
+            raise GitExecError("Git command error:{}".format(e))
+        except Exception as e:
+            raise GitExecError(e)
