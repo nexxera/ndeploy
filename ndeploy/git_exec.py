@@ -163,7 +163,7 @@ class GitExec:
             cmd_archive_clone = ["git", "archive", "--remote={repo_url}".format(repo_url=repo_url),
                                  branch, file_relative_path]
             g = git.Git()
-            ssh_executable = 'ssh -i {rsa_path}'.format(rsa_path=rsa_path)
+            ssh_executable = 'ssh -o StrictHostKeyChecking=no -i {rsa_path}'.format(rsa_path=rsa_path)
             with g.custom_environment(GIT_SSH_COMMAND=ssh_executable):
                 out = g.execute(command=cmd_archive_clone)
                 with io.BytesIO(bytearray(map(ord, out))) as f:
