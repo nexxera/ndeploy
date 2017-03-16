@@ -1,7 +1,5 @@
 import unittest
 from unittest.mock import patch, MagicMock
-
-import git
 from git import PushInfo
 
 from ndeploy.git_exec import GitExec, GitExecError
@@ -83,36 +81,3 @@ class GitExecTest(unittest.TestCase):
 
         current_branch_name = self.git_exec.get_current_branch_name(repo_full_path)
         self.assertEqual(branch_name, current_branch_name)
-
-    @patch('ndeploy.git_exec.git.Git')
-    @patch('ndeploy.git_exec.tarfile')
-    def test_should_be_possible_to_archive_clone(self, mock_tarfile, mock_git):
-        rsa_path = ".ssh/id_rsa"
-        repo_url = "https://git.nexx.com/utils/ndeploy.git"
-        branch = "master"
-        local_folder = "/tmp"
-        file_relative_path = "app1.yaml"
-
-        file_result = self.git_exec.archive_clone(rsa_path, repo_url, branch, local_folder, file_relative_path)
-        mock_git_instance = mock_git.return_value
-        mock_git_instance.custom_environment.assert_called_once_with(GIT_SSH_COMMAND='ssh -i {}'.format(rsa_path))
-        cmd_archive_clone = ["git", "archive", "--remote={repo_url}".format(repo_url=repo_url),
-                             branch, file_relative_path]
-        mock_git_instance.execute(command=cmd_archive_clone)
-        file_path_expected = "{}/{}".format(local_folder, file_relative_path)
-        self.assertEqual(file_path_expected, file_result)
-
-    @patch('ndeploy.git_exec.git.Git')
-    def test_should_raise_exception_if_file_does_not_exist_in_repository(self, mock_git):
-        rsa_path = ".ssh/id_rsa"
-        repo_url = "https://git.nexx.com/utils/ndeploy.git"
-        branch = "master"
-        local_folder = "/tmp"
-        file_relative_path = "app1.yaml"
-
-        cmd_archive_clone = ["git", "archive", "--remote={repo_url}".format(repo_url=repo_url),
-                             branch, file_relative_path]
-        mock_git_instance = mock_git.return_value
-        mock_git_instance.execute.side_effect = git.GitCommandError(command=cmd_archive_clone, status=None)
-        with self.assertRaises(expected_exception=GitExecError):
-            self.git_exec.archive_clone(rsa_path, repo_url, branch, local_folder, file_relative_path)
