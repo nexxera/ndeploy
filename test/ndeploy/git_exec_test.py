@@ -95,7 +95,8 @@ class GitExecTest(unittest.TestCase):
 
         file_result = self.git_exec.archive_clone(rsa_path, repo_url, branch, local_folder, file_relative_path)
         mock_git_instance = mock_git.return_value
-        mock_git_instance.custom_environment.assert_called_once_with(GIT_SSH_COMMAND='ssh -i {}'.format(rsa_path))
+        mock_git_instance.custom_environment.\
+            assert_called_once_with(GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -i {}'.format(rsa_path))
         cmd_archive_clone = ["git", "archive", "--remote={repo_url}".format(repo_url=repo_url),
                              branch, file_relative_path]
         mock_git_instance.execute(command=cmd_archive_clone)
