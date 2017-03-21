@@ -1,5 +1,6 @@
 import json
 import os.path
+import tempfile
 
 import yaml
 from yaml.parser import ParserError
@@ -167,6 +168,31 @@ class Deployer:
 
         return app, provider
 
+    @staticmethod
+    def _exec_git_clone_file(rsa_path, repo_url, branch_name, temporary_path, file_path):
+        """
+           Download the remote configuration file in a git repository
+
+           Args:
+               rsa_path (str): path to the repo rsa private key
+               repo_url (str): the remote repo url
+               branch_name (str): git branch name
+               temporary_path (str): the path of the temporary dir to the ndeploy
+               file_path (str): the path of the file relative to the repo root
+
+           Returns:
+               full path for the downloaded file
+           """
+        ShellExec.execute_program("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
+                                  "{branch} {file_relative_path} | tar -x -C {local_folder}'"
+                                  .format(rsa_path=rsa_path, repo_url=repo_url,
+                                          branch=branch_name, local_folder=temporary_path,
+                                          file_relative_path=file_path), True)
+        cloned_file = os.path.join(temporary_path, file_path)
+        if not os.path.isfile(cloned_file):
+            raise AppConfigFileCloneError(repo_url, cloned_file)
+        return cloned_file
+
     def _get_remote_conf(self, repo_url, branch, file_relative_path, rsa_path):
         """
         Gets the remote app configuration file in a git repository
@@ -189,27 +215,17 @@ class Deployer:
 
         print("...Getting remote app config file from " + repo_url)
 
-        def exec_git_clone_file(rsa_path, repo_url, branch, local_folder, file_relative_path):
-            ShellExec.execute_program("ssh-agent bash -c 'ssh-add {rsa_path}; git archive --remote={repo_url} "
-                                      "{branch} {file_relative_path} | tar -x -C {local_folder}'"
-                                      .format(rsa_path=rsa_path, repo_url=repo_url,
-                                              branch=branch, local_folder=local_folder,
-                                              file_relative_path=file_relative_path), True)
-            cloned_file = os.path.join(local_folder, file_relative_path)
-            if not os.path.isfile(cloned_file):
-                raise AppConfigFileCloneError(repo_url, cloned_file)
-            return cloned_file
+        with tempfile.TemporaryDirectory(dir=local_folder) as temporary_dir:
+            try:
+                cloned_file = self._exec_git_clone_file(rsa_path, repo_url, branch, temporary_dir, file_relative_path)
+            except AppConfigFileCloneError:
+                file_name, file_extension = file_relative_path.split('.')
+                new_file_extension = 'yaml' if file_extension == 'json' else 'json'
+                file_relative_path = '{}.{}'.format(file_name, new_file_extension)
+                cloned_file = self._exec_git_clone_file(rsa_path, repo_url, branch, temporary_dir, file_relative_path)
 
-        try:
-            cloned_file = exec_git_clone_file(rsa_path, repo_url, branch, local_folder, file_relative_path)
-        except AppConfigFileCloneError:
-            file_name, file_extension = file_relative_path.split('.')
-            new_file_extension = 'yaml' if file_extension == 'json' else 'json'
-            file_relative_path = '{}.{}'.format(file_name, new_file_extension)
-            cloned_file = exec_git_clone_file(rsa_path, repo_url, branch, local_folder, file_relative_path)
-
-        print("...Successfully downloaded remote app config file")
-        return cloned_file
+            print("...Successfully downloaded remote app config file")
+            return self._resolve_environment_file(cloned_file)
 
     def _resolve_remote_app_file(self, group, name, env):
         """
@@ -231,8 +247,7 @@ class Deployer:
 
         rsa_key = self.env_repository.get_env_private_key_path(env.name)
         repo_url, branch, file_relative_path = env.format_remote_deployment_file_url(group, name)
-        cloned_file = self._get_remote_conf(repo_url, branch, file_relative_path, rsa_key)
-        app_data = self._resolve_environment_file(cloned_file)
+        app_data = self._get_remote_conf(repo_url, branch, file_relative_path, rsa_key)
 
         return app_data
 

@@ -59,10 +59,11 @@ class DeployerTest(unittest.TestCase):
         with self.assertRaises(expected_exception=InvalidArgumentError):
             self.deployer.deploy(group="group", name="app")
 
-    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
-    def test_deploy_with_group_name_and_registered_env(self, _get_remote_conf):
+    @mock.patch("ndeploy.deployer.Deployer._exec_git_clone_file")
+    def test_deploy_with_group_name_and_registered_env(self, mock_exec_git_clone_file):
+        self.env_repo.get_ndeploy_dir.return_value = "/"
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_with_env.json')
-        _get_remote_conf.return_value = local_file
+        mock_exec_git_clone_file.return_value = local_file
         self._configure_env("dev", "dev.nexxera.com", "dokku",
                             "git@git.nexxera.com:environment-conf-dev/{group}.git master {name}.json")
         self.deployer.deploy(group="financial-platform", name="financial-platform-core", environment="dev")
@@ -87,20 +88,22 @@ class DeployerTest(unittest.TestCase):
         with self.assertRaises(InvalidArgumentError):
             self.deployer.undeploy(name="app", group="group", environment="invalid")
 
-    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
-    def test_undeploy_should_call_correct_provider_to_undeploy(self, mock_get_remote_conf):
+    @mock.patch("ndeploy.deployer.Deployer._exec_git_clone_file")
+    def test_undeploy_should_call_correct_provider_to_undeploy(self, mock_exec_git_clone_file):
+        self.env_repo.get_ndeploy_dir.return_value = "/"
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
-        mock_get_remote_conf.return_value = local_file
+        mock_exec_git_clone_file.return_value = local_file
 
         self._configure_env("qa", "qa.nexxera.com", "openshift",
                             "git@git.nexxera.com:environment-conf-qa/{group}.git master {name}.json")
         self.deployer.undeploy(name="app", group="group", environment="qa")
         self._assert_undeploy_call("my-app", "super-app", "qa", "qa.nexxera.com", "openshift")
 
-    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
-    def test_undeploy_should_accept_n_apps_in_config_file(self, mock_get_remote_conf):
+    @mock.patch("ndeploy.deployer.Deployer._exec_git_clone_file")
+    def test_undeploy_should_accept_n_apps_in_config_file(self, mock_exec_git_clone_file):
+        self.env_repo.get_ndeploy_dir.return_value = "/"
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps.json')
-        mock_get_remote_conf.return_value = local_file
+        mock_exec_git_clone_file.return_value = local_file
 
         self._configure_env("dev", "dev.nexxera.com", "openshift",
                             "git@git.nexxera.com:environment-conf-dev/{group}.git master {name}.json")
@@ -123,24 +126,18 @@ class DeployerTest(unittest.TestCase):
         self.deployer.deploy(file=local_file, environment="qa")
         self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexx.com", "openshift")
 
-    def test_deploy_should_be_without_environment_variable(self):
-        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_without_variable.json')
-        self._configure_env("qa", "qa.nexx.com", "openshift", None)
-
-        self.deployer.deploy(file=local_file, environment="qa")
-        self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexx.com", "openshift")
-
-    @mock.patch("os.path.exists")
     @mock.patch("ndeploy.deployer.Deployer._load_template_ndeploy_file")
-    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
+    @mock.patch("os.path.exists")
+    @mock.patch("ndeploy.deployer.Deployer._exec_git_clone_file")
     def test_deploy_should_be_possible_to_merge_the_local_template_with_remote_settings(
-            self, mock_get_remote_conf, mock_load_template_ndeploy_file, mock_os_exists):
+            self, mock_exec_git_clone_file, mock_os_exists, _):
+        self.env_repo.get_ndeploy_dir.return_value = "/"
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app.json')
-        mock_os_exists.return_value = True
+        # mock_os_exists.return_value = True
         self.deployer._app_data_template = self._load_json_to_dict(local_file)
 
         remote_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_remote.json')
-        mock_get_remote_conf.return_value = remote_file
+        mock_exec_git_clone_file.return_value = remote_file
         remote_data_config = self._load_json_to_dict(remote_file)
 
         self._configure_env("qa", "qa.nexx.com", "openshift",
@@ -148,6 +145,13 @@ class DeployerTest(unittest.TestCase):
         self.deployer.deploy(group="platform", name="platform-core", environment="qa")
         self._assert_deploy_call(remote_data_config["name"], remote_data_config["deploy_name"],
                                  "qa", "qa.nexx.com", "openshift")
+
+    def test_deploy_should_be_without_environment_variable(self):
+        local_file = os.path.join(os.path.dirname(__file__), '../resources', 'app_without_variable.json')
+        self._configure_env("qa", "qa.nexx.com", "openshift", None)
+
+        self.deployer.deploy(file=local_file, environment="qa")
+        self._assert_deploy_call("my-app", "super-app", "qa", "qa.nexx.com", "openshift")
 
     @mock.patch("os.path.exists")
     def test_deploy_should_raise_exception_if_invalid_json_file(self, mock_template_ndeploy):
@@ -177,17 +181,18 @@ class DeployerTest(unittest.TestCase):
         self._assert_deploy_call_list(0, "my-app", "super-my-app", "dev", "dev.nexxera.com", "dokku")
         self._assert_deploy_call_list(1, "other-app", "super-other-app", "dev", "dev.nexxera.com", "dokku")
 
-    @mock.patch("os.path.exists")
     @mock.patch("ndeploy.deployer.Deployer._load_template_ndeploy_file")
-    @mock.patch("ndeploy.deployer.Deployer._get_remote_conf")
+    @mock.patch("os.path.exists")
+    @mock.patch("ndeploy.deployer.Deployer._exec_git_clone_file")
     def test_deploy_should_be_possible_to_merge_the_local_template_with_remote_settings_from_n_apps(
-            self, mock_get_remote_conf, mock_load_template_ndeploy_file, mock_os_exists):
+            self, mock_exec_git_clone_file, mock_os_exists, _):
+        self.env_repo.get_ndeploy_dir.return_value = "/"
         local_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps.json')
         mock_os_exists.return_value = True
         self.deployer._app_data_template = self._load_json_to_dict(local_file)
 
         remote_file = os.path.join(os.path.dirname(__file__), '../resources', 'apps_remote.json')
-        mock_get_remote_conf.return_value = remote_file
+        mock_exec_git_clone_file.return_value = remote_file
         remote_data_config = self._load_json_to_dict(remote_file)
 
         self._configure_env("qa", "qa.nexx.com", "openshift",
