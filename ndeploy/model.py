@@ -123,3 +123,4 @@ class App:
         self.repository = args["repository"] if "repository" in args else ""
         self.image = args["image"] if "image" in args else ""
         self.env_vars = args["env_vars"] if "env_vars" in args else {}
+        self.domains = args["domains"] if "domains" in args else []

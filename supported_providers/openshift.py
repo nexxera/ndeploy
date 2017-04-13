@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from ndeploy.provider import AbstractProvider
 import socket
 from ndeploy.exception import NDeployError
@@ -95,6 +98,7 @@ class OpenshiftProvider(AbstractProvider):
         self.configure_project()
         create_app_callback()
         self.expose_service()
+        self._expose_service_domains_(self.app.domains)
 
     def create_app_by_image(self):
         """
@@ -196,35 +200,63 @@ class OpenshiftProvider(AbstractProvider):
         The created route will have the name of the app
 
         """
-        route_name = self.app.deploy_name
+        deploy_name = self.app.deploy_name
 
-        print("...Verifying if route {} exists........."
-              .format(route_name), end="")
-        if not self.route_exist(route_name):
+        print("...Verifying if route {} exists.........".format(deploy_name), end="")
+        if not self.route_exist(self.get_openshift_app_host()):
             print("No, will create.......", end="")
-            self.create_route(route_name)
+            self.create_route(deploy_name, self.get_openshift_app_host())
             print("[Ok]")
         else:
             print("[Ok]")
 
-    def create_route(self, route_name):
+    def _expose_service_domains_(self, domains):
+        """
+        Expose the openshift extra route if it doesn't exist.
+        Args:
+            domains: Domains exposed to app
+
+        """
+        for domain in domains:
+            if not self.route_exist(domain):
+                print("...create route to domain: {}....".format(domain), end="")
+                hash_domain = self._generate_md5(domain)
+                route_name = "{}-{}".format(self.app.deploy_name, hash_domain[:6])
+                self.create_route(route_name, domain)
+                print("[Ok]")
+
+    @staticmethod
+    def _generate_md5(value):
+        """
+        Generate md5 sum from a value
+
+        Args:
+            value (str): string to generate md5 sum
+        Returns:
+            string with value md5 sum
+        """
+        return hashlib.md5(value.encode("utf-8")).hexdigest()
+
+    def create_route(self, route_name, route):
         """
         Creates the route for the app.
         The route name will be the app deploy name.
 
         Args:
             route_name (str): the route name
+            route (str): route to expose in openshift
 
         """
-        cmd = "expose service/%s --hostname=%s" % (route_name,
-                                                   self.get_openshift_app_host())
-        print("...Creating app route for %s : %s" % (self.app.deploy_name, cmd))
+        cmd = "expose service/{app_name} --hostname={hostname} --name={name}".format(app_name=self.app.deploy_name,
+                                                                                     hostname=route,
+                                                                                     name=route_name)
+        print("...Creating app route for {} : {}".format(self.app.deploy_name, cmd))
         self.openshift_exec(cmd)
 
         print("...Patching route to enable tls")
         patch_cmd = "patch route %s -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", " \
-                    "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" \
-                    % self.app.deploy_name
+                    "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" % route_name
+
         self.openshift_exec(patch_cmd)
 
     def get_openshift_app_host(self):
@@ -389,8 +421,17 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             True if exists, False otherwise
         """
-        return not self.oc_return_error("get routes {route}"
-                                        .format(route=route))
+        err, out = self.openshift_exec("get routes -o json")
+        if err:
+            print("...Error checking route existing: {}".format(err))
+            return False
+
+        routes_in_os = json.loads(out)
+        for route_os in routes_in_os["items"]:
+            if route_os["spec"]["to"]["name"] == self.app.deploy_name and route_os["spec"]["host"] == route:
+                return True
+
+        return False
 
     def openshift_exec(self, oc_cmd, append_project=True):
         """
