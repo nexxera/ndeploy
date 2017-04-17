@@ -155,15 +155,14 @@ class OpenShiftTest(unittest.TestCase):
 
     def test_should_expose_domains_if_does_not_exist(self):
         domains = ["myapp.dev.com", "myapp2.dev.com"]
-        self._configure_generate_md5("111111")
         self._deploy_by_image(domains=domains)
 
         calls_expected = [
-            call("expose service/myapp --hostname=myapp.dev.com --name=myapp-111111"),
-            call("patch route myapp-111111 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
+            call("expose service/myapp --hostname=myapp.dev.com --name=myapp-553a89"),
+            call("patch route myapp-553a89 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
                  "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'"),
-            call("expose service/myapp --hostname=myapp2.dev.com --name=myapp-111111"),
-            call("patch route myapp-111111 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
+            call("expose service/myapp --hostname=myapp2.dev.com --name=myapp-03cda5"),
+            call("patch route myapp-03cda5 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
                  "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'"),
         ]
         self.openshift.openshift_exec.assert_has_calls(calls_expected, any_order=False)

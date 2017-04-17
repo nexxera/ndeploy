@@ -204,7 +204,7 @@ class OpenshiftProvider(AbstractProvider):
 
         print("...Verifying if route {} exists.........".format(deploy_name), end="")
         if not self.route_exist(self.get_openshift_app_host()):
-            print("No, will create.......", end="")
+            print("No, will create.......")
             self.create_route(deploy_name, self.get_openshift_app_host())
             print("[Ok]")
         else:
@@ -250,10 +250,10 @@ class OpenshiftProvider(AbstractProvider):
         cmd = "expose service/{app_name} --hostname={hostname} --name={name}".format(app_name=self.app.deploy_name,
                                                                                      hostname=route,
                                                                                      name=route_name)
-        print("...Creating app route for {} : {}".format(self.app.deploy_name, cmd))
+        print("\t...Creating app route for {}: {}".format(self.app.deploy_name, cmd))
         self.openshift_exec(cmd)
 
-        print("...Patching route to enable tls")
+        print("\t...Patching route to enable tls")
         patch_cmd = "patch route %s -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", " \
                     "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" % route_name
 
@@ -421,7 +421,7 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             True if exists, False otherwise
         """
-        err, out = self.openshift_exec("get routes -o json")
+        err, out = self.openshift_exec("get routes", output="-o json")
         if err:
             print("...Error checking route existing: {}".format(err))
             return False
@@ -433,7 +433,7 @@ class OpenshiftProvider(AbstractProvider):
 
         return False
 
-    def openshift_exec(self, oc_cmd, append_project=True):
+    def openshift_exec(self, oc_cmd, append_project=True, output=''):
         """
         Exec a command with oc client.
         If append_project the command will have the project option at the end.
@@ -450,6 +450,7 @@ class OpenshiftProvider(AbstractProvider):
             oc_cmd: oc command to execute
             append_project: if True will append the -n 'project_name'
                 at end of the command
+            output: output formats at Openshift
 
         Returns:
             tuple (err, out) containing response from ShellExec.execute_program
@@ -457,7 +458,8 @@ class OpenshiftProvider(AbstractProvider):
         """
         project = self.get_openshift_area_name()
         return self.shell_exec.execute_program(
-            "oc {cmd} {project}".format(cmd=oc_cmd, project="-n " + project if append_project != "" else ""), True)
+            "oc {cmd} {project} {output}"
+            .format(cmd=oc_cmd, project="-n " + project if append_project != "" else "", output=output), True)
 
     def oc_return_error(self, cmd, append_project=True):
         """
