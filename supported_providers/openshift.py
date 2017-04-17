@@ -98,7 +98,7 @@ class OpenshiftProvider(AbstractProvider):
         self.configure_project()
         create_app_callback()
         self.expose_service()
-        self._expose_service_domains_(self.app.domains)
+        self._expose_service_domains(self.app.domains)
 
     def create_app_by_image(self):
         """
@@ -210,7 +210,7 @@ class OpenshiftProvider(AbstractProvider):
         else:
             print("[Ok]")
 
-    def _expose_service_domains_(self, domains):
+    def _expose_service_domains(self, domains):
         """
         Expose the openshift extra route if it doesn't exist.
         Args:
