@@ -25,7 +25,8 @@ class AssembleModelTest(unittest.TestCase):
                            deploy_name="super-app",
                            repository="git@gitlab.nexxera.com:group/my-app.git",
                            image="gitlab-dreg.nexxera.com/group/my-app",
-                           env_vars=dict(APP_ENV="Development", EMAIL_HOST="smtp@domain.com"))
+                           env_vars=dict(APP_ENV="Development", EMAIL_HOST="smtp@domain.com"),
+                           domains=["myapp.bla.com", "app.bla.com"])
 
         self.assertEqual(app.__dict__, app_expected.__dict__)
 

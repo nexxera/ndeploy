@@ -7,5 +7,9 @@
   "env_vars": {
     "APP_ENV": "Development",
     "EMAIL_HOST": "smtp@domain.com"
-  }
+  },
+  "domains": [
+    "myapp.bla.com",
+    "app.bla.com"
+  ]
 }
