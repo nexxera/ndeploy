@@ -70,9 +70,9 @@ class OpenShiftTest(unittest.TestCase):
         self._configure_route_exist("myapp-mygroup.dev.com", False)
         self._deploy_by_source()
         self.openshift.openshift_exec.assert_any_call(
-            "expose service/myapp --hostname=myapp-mygroup.dev.com --name=myapp")
+            "expose service/myapp --hostname=myapp-mygroup.dev.com --name=myapp-affcd2")
         self.openshift.openshift_exec.assert_any_call(
-            "patch route myapp -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
+            "patch route myapp-affcd2 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
             "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'"
             )
 
@@ -217,4 +217,4 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.openshift_exec = MagicMock(return_value=return_value if return_value else (None, ""))
 
     def _configure_generate_md5(self, md5_value="123456"):
-        self.openshift._generate_md5 = MagicMock(return_value=md5_value)
+        self.openshift._generate_unique_id = MagicMock(return_value=md5_value)

@@ -98,7 +98,6 @@ class OpenshiftProvider(AbstractProvider):
         self.configure_project()
         create_app_callback()
         self.expose_service()
-        self._expose_service_domains(self.app.domains)
 
     def create_app_by_image(self):
         """
@@ -200,15 +199,10 @@ class OpenshiftProvider(AbstractProvider):
         The created route will have the name of the app
 
         """
-        deploy_name = self.app.deploy_name
-
-        print("...Verifying if route {} exists.........".format(deploy_name), end="")
-        if not self.route_exist(self.get_openshift_app_host()):
-            print("No, will create.......")
-            self.create_route(deploy_name, self.get_openshift_app_host())
-            print("[Ok]")
-        else:
-            print("[Ok]")
+        default_domain = self.get_openshift_app_host()
+        domains = [default_domain] + self.app.domains
+        self._expose_service_domains(domains)
+        print("[Ok]")
 
     def _expose_service_domains(self, domains):
         """
@@ -219,14 +213,13 @@ class OpenshiftProvider(AbstractProvider):
         """
         for domain in domains:
             if not self.route_exist(domain):
-                print("...create route to domain: {}....".format(domain), end="")
-                hash_domain = self._generate_md5(domain)
-                route_name = "{}-{}".format(self.app.deploy_name, hash_domain[:6])
+                print("...Create route to domain: {}....".format(domain))
+                hash_domain = self._generate_unique_id(domain)
+                route_name = "{}-{}".format(self.app.deploy_name, hash_domain)
                 self.create_route(route_name, domain)
-                print("[Ok]")
 
     @staticmethod
-    def _generate_md5(value):
+    def _generate_unique_id(value):
         """
         Generate md5 sum from a value
 
@@ -235,7 +228,7 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             string with value md5 sum
         """
-        return hashlib.md5(value.encode("utf-8")).hexdigest()
+        return hashlib.md5(value.encode("utf-8")).hexdigest()[:6]
 
     def create_route(self, route_name, route):
         """
@@ -250,14 +243,15 @@ class OpenshiftProvider(AbstractProvider):
         cmd = "expose service/{app_name} --hostname={hostname} --name={name}".format(app_name=self.app.deploy_name,
                                                                                      hostname=route,
                                                                                      name=route_name)
-        print("\t...Creating app route for {}: {}".format(self.app.deploy_name, cmd))
+        print("\t...Creating app route to {}: {}".format(self.app.deploy_name, cmd))
         self.openshift_exec(cmd)
 
-        print("\t...Patching route to enable tls")
+        print("\t...Patching route to enable tls...", end="")
         patch_cmd = "patch route %s -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", " \
                     "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" % route_name
 
         self.openshift_exec(patch_cmd)
+        print("[Ok]")
 
     def get_openshift_app_host(self):
         """
