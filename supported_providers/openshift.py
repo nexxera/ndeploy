@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from ndeploy.provider import AbstractProvider
 import socket
 from ndeploy.exception import NDeployError
@@ -196,36 +199,59 @@ class OpenshiftProvider(AbstractProvider):
         The created route will have the name of the app
 
         """
-        route_name = self.app.deploy_name
+        default_domain = self.get_openshift_app_host()
+        domains = [default_domain] + self.app.domains
+        self._expose_service_domains(domains)
+        print("[Ok]")
 
-        print("...Verifying if route {} exists........."
-              .format(route_name), end="")
-        if not self.route_exist(route_name):
-            print("No, will create.......", end="")
-            self.create_route(route_name)
-            print("[Ok]")
-        else:
-            print("[Ok]")
+    def _expose_service_domains(self, domains):
+        """
+        Expose the openshift extra route if it doesn't exist.
+        Args:
+            domains: Domains exposed to app
 
-    def create_route(self, route_name):
+        """
+        for domain in domains:
+            if not self.route_exist(domain):
+                print("...Create route to domain: {}....".format(domain))
+                hash_domain = self._generate_unique_id(domain)
+                route_name = "{}-{}".format(self.app.deploy_name, hash_domain)
+                self.create_route(route_name, domain)
+
+    @staticmethod
+    def _generate_unique_id(value):
+        """
+        Generate md5 sum from a value
+
+        Args:
+            value (str): string to generate md5 sum
+        Returns:
+            string with value md5 sum
+        """
+        return hashlib.md5(value.encode("utf-8")).hexdigest()[:6]
+
+    def create_route(self, route_name, route):
         """
         Creates the route for the app.
         The route name will be the app deploy name.
 
         Args:
             route_name (str): the route name
+            route (str): route to expose in openshift
 
         """
-        cmd = "expose service/%s --hostname=%s" % (route_name,
-                                                   self.get_openshift_app_host())
-        print("...Creating app route for %s : %s" % (self.app.deploy_name, cmd))
+        cmd = "expose service/{app_name} --hostname={hostname} --name={name}".format(app_name=self.app.deploy_name,
+                                                                                     hostname=route,
+                                                                                     name=route_name)
+        print("\t...Creating app route to {}: {}".format(self.app.deploy_name, cmd))
         self.openshift_exec(cmd)
 
-        print("...Patching route to enable tls")
+        print("\t...Patching route to enable tls...", end="")
         patch_cmd = "patch route %s -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", " \
-                    "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" \
-                    % self.app.deploy_name
+                    "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'" % route_name
+
         self.openshift_exec(patch_cmd)
+        print("[Ok]")
 
     def get_openshift_app_host(self):
         """
@@ -389,10 +415,19 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             True if exists, False otherwise
         """
-        return not self.oc_return_error("get routes {route}"
-                                        .format(route=route))
+        err, out = self.openshift_exec("get routes", output="-o json")
+        if err:
+            print("...Error checking route existing: {}".format(err))
+            return False
 
-    def openshift_exec(self, oc_cmd, append_project=True):
+        routes_in_os = json.loads(out)
+        for route_os in routes_in_os["items"]:
+            if route_os["spec"]["to"]["name"] == self.app.deploy_name and route_os["spec"]["host"] == route:
+                return True
+
+        return False
+
+    def openshift_exec(self, oc_cmd, append_project=True, output=''):
         """
         Exec a command with oc client.
         If append_project the command will have the project option at the end.
@@ -409,6 +444,7 @@ class OpenshiftProvider(AbstractProvider):
             oc_cmd: oc command to execute
             append_project: if True will append the -n 'project_name'
                 at end of the command
+            output: output formats at Openshift
 
         Returns:
             tuple (err, out) containing response from ShellExec.execute_program
@@ -416,7 +452,8 @@ class OpenshiftProvider(AbstractProvider):
         """
         project = self.get_openshift_area_name()
         return self.shell_exec.execute_program(
-            "oc {cmd} {project}".format(cmd=oc_cmd, project="-n " + project if append_project != "" else ""), True)
+            "oc {cmd} {project} {output}"
+            .format(cmd=oc_cmd, project="-n " + project if append_project != "" else "", output=output), True)
 
     def oc_return_error(self, cmd, append_project=True):
         """

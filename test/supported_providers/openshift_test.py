@@ -2,7 +2,7 @@ import unittest
 from supported_providers.openshift import OpenshiftProvider, \
     OpenShiftNotLoggedError, OpenShiftNameTooLongError
 from ndeploy.model import App, Environment
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 
 class OpenShiftTest(unittest.TestCase):
@@ -14,6 +14,7 @@ class OpenShiftTest(unittest.TestCase):
         self._configure_is_logged(True)
         self._configure_openshift_exec()
         self._configure_get_deploy_revision([0, 1])
+        self._configure_route_exist("myapp-mygroup.dev.com", True)
 
     def test_should_raise_exception_if_user_is_not_logged(self):
         with self.assertRaises(expected_exception=OpenShiftNotLoggedError):
@@ -66,17 +67,17 @@ class OpenShiftTest(unittest.TestCase):
             "oc patch bc myapp -p '{\"spec\":{\"source\":{\"sourceSecret\":{\"name\":\"scmsecret\"}}}}' -n mygroup")
 
     def test_should_expose_service_if_does_not_exist(self):
-        self._configure_route_exist("myapp", False)
+        self._configure_route_exist("myapp-mygroup.dev.com", False)
         self._deploy_by_source()
         self.openshift.openshift_exec.assert_any_call(
-            "expose service/myapp --hostname=myapp-mygroup.dev.com")
+            "expose service/myapp --hostname=myapp-mygroup.dev.com --name=myapp-affcd2")
         self.openshift.openshift_exec.assert_any_call(
-            "patch route myapp -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
+            "patch route myapp-affcd2 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
             "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'"
             )
 
     def test_should_not_expose_service_if_exist(self):
-        self._configure_route_exist("myapp", True)
+        self._configure_route_exist("myapp-mygroup.dev.com", True)
         self.openshift.create_route = MagicMock()
         self._deploy_by_source()
         self.assertEqual(0, self.openshift.create_route.call_count)
@@ -139,14 +140,47 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.openshift_exec.assert_any_call(
             "deploy myapp --latest")
 
+    def test_should_be_route_exist(self):
+        self.openshift = OpenshiftProvider()
+        self.openshift.app = self._create_app()
+        self._configure_openshift_exec(("", '{"items": [{"spec": '
+                                            '{"host": "myapp-group.dev.com", "to": {"name": "myapp"}}}]}'))
+        self.assertTrue(self.openshift.route_exist("myapp-group.dev.com"))
+
+    def test_should_not_be_route_exist(self):
+        self.openshift = OpenshiftProvider()
+        self.openshift.app = self._create_app()
+        self._configure_openshift_exec(("", '{"items": []}'))
+        self.assertFalse(self.openshift.route_exist("myapp-group.dev.com"))
+
+    def test_should_expose_domains_if_does_not_exist(self):
+        domains = ["myapp.dev.com", "myapp2.dev.com"]
+        self._deploy_by_image(domains=domains)
+
+        calls_expected = [
+            call("expose service/myapp --hostname=myapp.dev.com --name=myapp-553a89"),
+            call("patch route myapp-553a89 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
+                 "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'"),
+            call("expose service/myapp --hostname=myapp2.dev.com --name=myapp-03cda5"),
+            call("patch route myapp-03cda5 -p '{\"spec\": {\"tls\": {\"termination\": \"edge\", "
+                 "\"insecureEdgeTerminationPolicy\": \"Redirect\"}}}'"),
+        ]
+        self.openshift.openshift_exec.assert_has_calls(calls_expected, any_order=False)
+
     # helpers
 
-    def _deploy_by_image(self, env_vars={}, image=None):
-        app = App("myapp", "mygroup", image=image if image else "image1.dev.nexxera.com", env_vars=env_vars)
+    @staticmethod
+    def _create_app(env_vars={}, image=None, repository=None, domains=list()):
+        return App("myapp", "mygroup", image=image if image is not None else "image1.dev.nexxera.com",
+                   repository=repository if repository is not None else "git@git.nexxera.com/myapp",
+                   env_vars=env_vars, domains=domains)
+
+    def _deploy_by_image(self, env_vars={}, image=None, domains=list()):
+        app = self._create_app(env_vars=env_vars, image=image, domains=domains, repository="")
         self._deploy(app)
 
     def _deploy_by_source(self, env_vars={}):
-        app = App("myapp", "mygroup", repository="git@git.nexxera.com/myapp", env_vars=env_vars)
+        app = self._create_app(env_vars=env_vars, repository="git@git.nexxera.com/myapp", image="")
         self._deploy(app)
 
     def _undeploy(self):
@@ -179,5 +213,8 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift.get_app_deploy_revision = MagicMock(
             side_effect=revisions)
 
-    def _configure_openshift_exec(self):
-        self.openshift.openshift_exec = MagicMock(return_value=(None, ""))
+    def _configure_openshift_exec(self, return_value=None):
+        self.openshift.openshift_exec = MagicMock(return_value=return_value if return_value else (None, ""))
+
+    def _configure_generate_md5(self, md5_value="123456"):
+        self.openshift._generate_unique_id = MagicMock(return_value=md5_value)
