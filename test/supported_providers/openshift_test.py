@@ -52,11 +52,12 @@ class OpenShiftTest(unittest.TestCase):
 
     def test_deploy_by_image(self):
         self._configure_app_exist("myapp", False)
-        self._deploy_by_image()
+        env_vars = {"APP": "jucabala", "DB": "TESTE"}
+        self._deploy_by_image(env_vars=env_vars)
         self.openshift.openshift_exec.assert_any_call(
-            "new-app image1.dev.nexxera.com --name myapp")
-        self.openshift.openshift_exec.assert_any_call(
-            "env dc/myapp ")
+            "new-app image1.dev.nexxera.com --name myapp --env={}".format(self.openshift.prepare_env_vars(env_vars)))
+        self.openshift.openshift_exec.assert_any_call("env dc/myapp {env_vars}"
+                                                      .format(env_vars=self.openshift.prepare_env_vars(env_vars)))
 
     def test_deploy_by_source(self):
         self._configure_app_exist("myapp", False)
@@ -84,11 +85,12 @@ class OpenShiftTest(unittest.TestCase):
 
     def test_env_vars_should_be_injected_into_container_when_deploy_by_image(self):
         self._configure_app_exist("myapp", False)
-        self._deploy_by_image({"MY_VAR": "Ola amigo", "DUMMY": "156546"})
+        env_vars = {"MY_VAR": "Ola amigo", "DUMMY": "156546"}
+        self._deploy_by_image(env_vars=env_vars)
         self.openshift.openshift_exec.assert_any_call(
-            'new-app image1.dev.nexxera.com --name myapp')
+            'new-app image1.dev.nexxera.com --name myapp --env={}'.format(self.openshift.prepare_env_vars(env_vars)))
         self.openshift.openshift_exec.assert_any_call(
-            "env dc/myapp DUMMY=\"156546\" MY_VAR=\"Ola amigo\"")
+            "env dc/myapp {}".format(self.openshift.prepare_env_vars(env_vars)))
 
     def test_env_vars_should_be_injected_into_container_when_deploy_by_source(self):
         self._configure_app_exist("myapp", False)
