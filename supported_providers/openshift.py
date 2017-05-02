@@ -354,9 +354,11 @@ class OpenshiftProvider(AbstractProvider):
 
         """
         if by_image:
-            self.openshift_exec("new-app {image_url} --name {app_name}"
+            env_vars = self.prepare_env_vars(self.app.env_vars)
+            self.openshift_exec("new-app {image_url} --name {app_name} --env={env_vars}"
                                 .format(image_url=app.image,
-                                        app_name=app.deploy_name))
+                                        app_name=app.deploy_name,
+                                        env_vars=env_vars))
         else:
             self.openshift_exec("new-app {source_repo} --name {app_name}"
                                 .format(source_repo=app.repository,
@@ -415,7 +417,7 @@ class OpenshiftProvider(AbstractProvider):
         Returns:
             True if exists, False otherwise
         """
-        err, out = self.openshift_exec("get routes", output="-o json")
+        err, out = self.openshift_exec("get routes", output="json")
         if err:
             print("...Error checking route existing: {}".format(err))
             return False
@@ -444,7 +446,7 @@ class OpenshiftProvider(AbstractProvider):
             oc_cmd: oc command to execute
             append_project: if True will append the -n 'project_name'
                 at end of the command
-            output: output formats at Openshift
+            output: output formats at Openshift (json, yaml), by default bash table
 
         Returns:
             tuple (err, out) containing response from ShellExec.execute_program
@@ -453,7 +455,8 @@ class OpenshiftProvider(AbstractProvider):
         project = self.get_openshift_area_name()
         return self.shell_exec.execute_program(
             "oc {cmd} {project} {output}"
-            .format(cmd=oc_cmd, project="-n " + project if append_project != "" else "", output=output), True)
+            .format(cmd=oc_cmd, project="-n " + project if append_project != "" else "",
+                    output="-o {}".format(output) if output else ""), True)
 
     def oc_return_error(self, cmd, append_project=True):
         """
@@ -536,18 +539,12 @@ class OpenshiftProvider(AbstractProvider):
             int: revision number
 
         """
-        err, out = self.openshift_exec("get dc/{app_name}"
-                                       .format(app_name=self.app.deploy_name))
+        err, out = self.openshift_exec("get dc/{app_name}".format(app_name=self.app.deploy_name),
+                                       output="json")
 
         if err:
             return 0
 
-        # need to found a better way to handle that
-        # for now we are parsing the output of get dc
-        lines = out.split("\n")
-        assert len(lines) == 2, \
-            "Could not parse get dc output. Maybe it is an api change"
-        columns = lines[1].split()
-        assert len(columns) == 4, \
-            "Could not parse get dc output. Maybe it is an api change"
-        return columns[1]
+        deployment_config = json.loads(out)
+        revision = deployment_config["status"].get("latestVersion", 0)
+        return revision

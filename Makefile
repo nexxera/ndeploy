@@ -12,7 +12,7 @@ code-convention:
 	pycodestyle
 
 clean:
-	rm -rf dist ndeploy.egg-info build reports
+	rm -rf dist ndeploy.egg-info build reports .coverage .cache
 
 release: clean
 	python setup.py sdist bdist_wheel

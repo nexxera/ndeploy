@@ -66,7 +66,7 @@ pip install -r "requirements.txt"
 Rodar testes:
 
 ```
-paver coverage 
+make test 
 ```
 
 # **Exemplos do arquivo de deployment**
@@ -103,6 +103,7 @@ paver coverage
 | image | não | Endereço do registry da imagem docker. <br>Exemplo: "dockerhub.com/ivanilson/django_exemplo:master" | -- |
 | repository | não | Endereço do repositório git, sendo remoto ou local. <br>Exemplo remoto: "https://github.com/Zapelini/django_exemplo.git@master" <br>Exemplo local: ".@master" ou "~/git/django_exemplo@master" | -- |
 | env_vars | sim | Dicionário com as variáveis de ambientes que devem ser setadas na aplicação. | -- |
+| domains | não | Lista de domínios a ser exposto para a aplicação. | -- |
 
 
 # **Agradecimentos**
