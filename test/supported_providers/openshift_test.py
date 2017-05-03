@@ -50,6 +50,17 @@ class OpenShiftTest(unittest.TestCase):
         self._deploy_by_image()
         self.assertEqual(0, self.openshift.create_secret.call_count)
 
+    def test_should_add_annotations_in_project(self):
+        self._configure_project_exist("mygroup", True)
+        self._configure_secret_exist("scmsecret", True)
+        self.openshift.create_secret = MagicMock()
+        self._deploy_by_image()
+        self.assertEqual(0, self.openshift.create_secret.call_count)
+
+        self.openshift.openshift_exec.assert_any_call(
+            'patch namespace mygroup --patch \'{"metadata": {"annotations": '
+            '{"openshift.io/node-selector": "region=dev"}}}\'')
+
     def test_deploy_by_image(self):
         self._configure_app_exist("myapp", False)
         env_vars = {"APP": "jucabala", "DB": "TESTE"}
