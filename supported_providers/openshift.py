@@ -430,16 +430,18 @@ class OpenshiftProvider(AbstractProvider):
             True if exists, False otherwise
         """
         err, out = self.openshift_exec("get routes", output="json")
-        if err:
-            print("...Error checking route existing: {}".format(err))
+        try:
+            routes_in_os = json.loads(out)
+            for route_os in routes_in_os["items"]:
+                if route_os["spec"]["to"]["name"] == self.app.deploy_name and route_os["spec"]["host"] == route:
+                    return True
+
             return False
 
-        routes_in_os = json.loads(out)
-        for route_os in routes_in_os["items"]:
-            if route_os["spec"]["to"]["name"] == self.app.deploy_name and route_os["spec"]["host"] == route:
-                return True
-
-        return False
+        except json.decoder.JSONDecodeError as e:
+            print("...{}".format(err))
+            print("...Error checking route existing: {}".format(e))
+            return False
 
     def openshift_exec(self, oc_cmd, append_project=True, output=''):
         """

@@ -166,6 +166,12 @@ class OpenShiftTest(unittest.TestCase):
         self._configure_openshift_exec(("", '{"items": []}'))
         self.assertFalse(self.openshift.route_exist("myapp-group.dev.com"))
 
+    def test_should_not_check_if_route_exists_with_invalid_json(self):
+        self.openshift = OpenshiftProvider()
+        self.openshift.app = self._create_app()
+        self._configure_openshift_exec(("", '{invalid_json}'))
+        self.assertFalse(self.openshift.route_exist("myapp-group.dev.com"))
+
     def test_should_expose_domains_if_does_not_exist(self):
         domains = ["myapp.dev.com", "myapp2.dev.com"]
         self._deploy_by_image(domains=domains)
