@@ -270,6 +270,7 @@ class OpenshiftProvider(AbstractProvider):
         """
         self.create_project_if_does_not_exist()
         self.create_secret_if_does_not_exist()
+        self.add_annotations_in_project()
 
     def create_project(self, project):
         """
@@ -327,6 +328,17 @@ class OpenshiftProvider(AbstractProvider):
             print("[Ok]")
         else:
             print("[Ok]")
+
+    def add_annotations_in_project(self):
+        """
+        Add openshift annotations in project
+
+        """
+        deployment_config = {
+            "metadata": {"annotations": {"openshift.io/node-selector": "region={}".format(self.env.name)}}
+        }
+        self.openshift_exec("patch namespace {project_name} --patch '{dc_json}'".format(
+            project_name=self.get_openshift_area_name(), dc_json=json.dumps(deployment_config)))
 
     def app_exist(self, app):
         """
@@ -418,16 +430,18 @@ class OpenshiftProvider(AbstractProvider):
             True if exists, False otherwise
         """
         err, out = self.openshift_exec("get routes", output="json")
-        if err:
-            print("...Error checking route existing: {}".format(err))
+        try:
+            routes_in_os = json.loads(out)
+            for route_os in routes_in_os["items"]:
+                if route_os["spec"]["to"]["name"] == self.app.deploy_name and route_os["spec"]["host"] == route:
+                    return True
+
             return False
 
-        routes_in_os = json.loads(out)
-        for route_os in routes_in_os["items"]:
-            if route_os["spec"]["to"]["name"] == self.app.deploy_name and route_os["spec"]["host"] == route:
-                return True
-
-        return False
+        except json.decoder.JSONDecodeError as e:
+            print("...{}".format(err))
+            print("...Error checking route existing: {}".format(e))
+            return False
 
     def openshift_exec(self, oc_cmd, append_project=True, output=''):
         """

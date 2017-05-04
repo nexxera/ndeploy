@@ -50,6 +50,17 @@ class OpenShiftTest(unittest.TestCase):
         self._deploy_by_image()
         self.assertEqual(0, self.openshift.create_secret.call_count)
 
+    def test_should_add_annotations_in_project(self):
+        self._configure_project_exist("mygroup", True)
+        self._configure_secret_exist("scmsecret", True)
+        self.openshift.create_secret = MagicMock()
+        self._deploy_by_image()
+        self.assertEqual(0, self.openshift.create_secret.call_count)
+
+        self.openshift.openshift_exec.assert_any_call(
+            'patch namespace mygroup --patch \'{"metadata": {"annotations": '
+            '{"openshift.io/node-selector": "region=dev"}}}\'')
+
     def test_deploy_by_image(self):
         self._configure_app_exist("myapp", False)
         env_vars = {"APP": "jucabala", "DB": "TESTE"}
@@ -153,6 +164,12 @@ class OpenShiftTest(unittest.TestCase):
         self.openshift = OpenshiftProvider()
         self.openshift.app = self._create_app()
         self._configure_openshift_exec(("", '{"items": []}'))
+        self.assertFalse(self.openshift.route_exist("myapp-group.dev.com"))
+
+    def test_should_not_check_if_route_exists_with_invalid_json(self):
+        self.openshift = OpenshiftProvider()
+        self.openshift.app = self._create_app()
+        self._configure_openshift_exec(("", '{invalid_json}'))
         self.assertFalse(self.openshift.route_exist("myapp-group.dev.com"))
 
     def test_should_expose_domains_if_does_not_exist(self):
